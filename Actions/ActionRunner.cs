@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using MacroInWZa007.Core;
 using MacroInWZa007.Input;
@@ -12,6 +14,13 @@ namespace MacroInWZa007.Actions;
 public static class ActionRunner
 {
     public const int MaxDelayMs = 60000;
+
+    // How long a program we opened counts as "still starting up" when it has no window yet.
+    private static readonly TimeSpan StartupGrace = TimeSpan.FromSeconds(15);
+
+    // The program each toggling run last opened, so a second press while it's still loading
+    // doesn't open another copy.
+    private static readonly ConditionalWeakTable<ActionSpec, Process> Launched = new();
 
     private static readonly Dictionary<string, (int Vk, string Name)> MediaCommands = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -30,7 +39,10 @@ public static class ActionRunner
     private static string? Validate(ActionSpec action, bool isStep) => Normalize(action.Type) switch
     {
         "run" when string.IsNullOrWhiteSpace(action.Path) => Loc.T("Err.RunPath"),
+        "run" when action.Toggle == true && ToggleTarget(action) is null => Loc.T("Err.ToggleNeedsExe"),
         "run" => null,
+        "close" when string.IsNullOrWhiteSpace(action.Process) => Loc.T("Err.CloseApp"),
+        "close" => null,
         "text" when string.IsNullOrEmpty(action.Value) => Loc.T("Err.TextValue"),
         "text" => null,
         "sendkeys" => KeyCombo.TryParse(action.Keys, out _, out var error) ? null : error,
@@ -58,7 +70,9 @@ public static class ActionRunner
     /// <summary>Short subtitle for the bindings list, such as "Run · wt.exe".</summary>
     public static string Describe(ActionSpec action) => Normalize(action.Type) switch
     {
+        "run" when action.Toggle == true => Loc.F("Desc.Toggle", action.Path),
         "run" => Loc.F("Desc.Run", action.Path),
+        "close" => Loc.F("Desc.Close", action.Process),
         "text" => Loc.T("Desc.Text"),
         "sendkeys" => Loc.F("Desc.Keys", action.Keys),
         "media" => MediaCommands.ContainsKey(action.Command ?? "")
@@ -71,6 +85,24 @@ public static class ActionRunner
 
     public static string MediaLabel(string? command) =>
         MediaCommands.TryGetValue(command ?? "", out var m) ? Loc.T("Media." + m.Name) : command ?? "";
+
+    /// <summary>
+    /// The app a toggling run closes: the explicit <see cref="ActionSpec.Process"/>, else the program
+    /// itself when <see cref="ActionSpec.Path"/> names an exe. Null for documents, folders, and URLs.
+    /// </summary>
+    public static string? ToggleTarget(ActionSpec action)
+    {
+        if (!string.IsNullOrWhiteSpace(action.Process))
+            return action.Process.Trim();
+        var path = Environment.ExpandEnvironmentVariables(action.Path ?? "").Trim().Trim('"');
+        if (path.Contains("://", StringComparison.Ordinal))
+            return null;
+        var extension = System.IO.Path.GetExtension(path);
+        return extension.Equals(".exe", StringComparison.OrdinalIgnoreCase) || (extension.Length == 0 && path.Length > 0)
+            ? path
+            : null;
+    }
+
     /// <summary>True for actions that type into whichever window has focus.</summary>
     public static bool TypesIntoFocusedWindow(ActionSpec action) =>
         Normalize(action.Type) is "text" or "sendkeys" or "macro";
@@ -101,11 +133,15 @@ public static class ActionRunner
         switch (Normalize(action.Type))
         {
             case "run":
-                Process.Start(new ProcessStartInfo(Environment.ExpandEnvironmentVariables(action.Path!))
+                if (action.Toggle == true)
                 {
-                    Arguments = action.Args ?? "",
-                    UseShellExecute = true,
-                });
+                    RunToggle(action);
+                    break;
+                }
+                Start(action);
+                break;
+            case "close":
+                WindowCloser.Close(action.Process!); // Nothing open is fine: there's nothing to close.
                 break;
             case "text":
                 InputSender.SendText(action.Value!);
@@ -122,6 +158,43 @@ public static class ActionRunner
                 break;
         }
     }
+
+    /// <summary>Closes the program when it's open, otherwise opens it.</summary>
+    private static void RunToggle(ActionSpec action)
+    {
+        if (WindowCloser.Close(ToggleTarget(action)!) > 0)
+            return;
+        lock (Launched)
+        {
+            if (Launched.TryGetValue(action, out var previous) && IsStillStarting(previous))
+                return; // Opened moments ago and no window yet: a second press shouldn't open another.
+            var started = Start(action);
+            if (started is null)
+                Launched.Remove(action); // Handed to an already-running process; nothing to track.
+            else
+                Launched.AddOrUpdate(action, started);
+            previous?.Dispose();
+        }
+    }
+
+    private static bool IsStillStarting(Process process)
+    {
+        try
+        {
+            return !process.HasExited && DateTime.Now - process.StartTime < StartupGrace;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
+        {
+            return false;
+        }
+    }
+
+    private static Process? Start(ActionSpec action) =>
+        Process.Start(new ProcessStartInfo(Environment.ExpandEnvironmentVariables(action.Path!))
+        {
+            Arguments = action.Args ?? "",
+            UseShellExecute = true,
+        });
 
     private static string Normalize(string? type) => (type ?? "").Trim().ToLowerInvariant();
 }

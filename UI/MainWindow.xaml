@@ -142,7 +142,7 @@
                             <ItemsControl ItemsSource="{Binding View}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Style="{StaticResource Row}" MouseLeftButtonUp="OnRowClick"
+                                        <Border Style="{StaticResource Row}" MouseLeftButtonUp="OnRowClick" Loaded="OnRowLoaded"
                                                 ToolTip="{DynamicResource List.ClickToEdit}">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
@@ -226,7 +226,7 @@
                         <ItemsControl ItemsSource="{Binding Profiles}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Style="{StaticResource Row}" MouseLeftButtonUp="OnProfileClick"
+                                    <Border Style="{StaticResource Row}" MouseLeftButtonUp="OnProfileClick" Loaded="OnRowLoaded"
                                             ToolTip="{DynamicResource Profiles.Open}">
                                         <DockPanel>
                                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource Icon}"

@@ -23,10 +23,10 @@ public partial class BindingEditorWindow : Window
 
     private readonly MainViewModel _viewModel;
     private readonly HotkeyBinding? _original;
-    private readonly ObservableCollection<SequenceStep> _sequence = new();
     private readonly ObservableCollection<MacroStep> _steps = new();
     private DispatcherTimer? _testCountdown;
     private bool _confirmDelete;
+    private bool _loading = true;
 
     /// <param name="original">The binding to edit, or null to create a new one.</param>
     /// <param name="draft">Starting values for a new binding.</param>
@@ -35,17 +35,18 @@ public partial class BindingEditorWindow : Window
         InitializeComponent();
         _viewModel = viewModel;
         _original = original;
-        SequenceList.ItemsSource = _sequence;
         StepList.ItemsSource = _steps;
         _steps.CollectionChanged += (_, _) => RenumberSteps();
 
         TriggerRecorder.KeysChanged += OnTriggerChanged;
         KeysRecorder.KeysChanged += HideError;
         Deactivated += (_, _) => KeyRecorder.CancelActive();
+        Loaded += (_, _) => Motion.ZoomIn(Body);
 
         HeaderText.SetResourceReference(TextBlock.TextProperty, original is null ? "Ed.New" : "Ed.Edit");
         DeleteButton.Visibility = original is null ? Visibility.Collapsed : Visibility.Visible;
         Load(original ?? draft ?? new HotkeyBinding());
+        _loading = false;
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -65,18 +66,15 @@ public partial class BindingEditorWindow : Window
 
     private void Load(HotkeyBinding binding)
     {
-        var steps = TriggerSpec.SplitSteps(binding.Trigger);
-        TriggerRecorder.Keys = steps.FirstOrDefault() ?? "";
-        foreach (var step in steps.Skip(1))
-            _sequence.Add(new SequenceStep { Keys = step });
-
         TriggerSpec.TryParseMode(binding.Mode, out var mode);
-        Check(ModeChips, steps.Length > 1 ? "sequence" : mode switch
+        bool isSequence = TriggerSpec.SplitSteps(binding.Trigger).Length > 1;
+        Check(ModeChips, isSequence ? "sequence" : mode switch
         {
             TriggerMode.DoubleTap => "doubleTap",
             TriggerMode.Hold => "hold",
             _ => "press",
         });
+        TriggerRecorder.Keys = binding.Trigger;
         HoldBox.Text = binding.HoldMs?.ToString() ?? "";
         NameBox.Text = binding.Name;
         AppBox.Text = binding.App ?? "";
@@ -86,6 +84,9 @@ public partial class BindingEditorWindow : Window
         Check(ActionChips, action.Type);
         PathBox.Text = action.Path ?? "";
         ArgsBox.Text = action.Args ?? "";
+        ToggleCloseSwitch.IsChecked = action.Toggle == true;
+        ToggleProcessBox.Text = action.Type.Equals("run", StringComparison.OrdinalIgnoreCase) ? action.Process ?? "" : "";
+        CloseProcessBox.Text = action.Type.Equals("close", StringComparison.OrdinalIgnoreCase) ? action.Process ?? "" : "";
         ValueBox.Text = (action.Value ?? "").Replace("\n", Environment.NewLine);
         KeysRecorder.Keys = action.Keys ?? "";
         if (action.Command is not null)
@@ -99,11 +100,8 @@ public partial class BindingEditorWindow : Window
     {
         string mode = CheckedTag(ModeChips) ?? "press";
         string trigger = TriggerRecorder.Keys;
-        if (mode == "sequence")
-        {
-            var keys = new[] { trigger }.Concat(_sequence.Select(s => s.Keys)).Where(k => k.Length > 0);
-            trigger = string.Join(", ", keys);
-        }
+        if (mode != "sequence")
+            trigger = TriggerSpec.SplitSteps(trigger).FirstOrDefault() ?? "";
 
         int? holdMs = null;
         if (mode == "hold" && HoldBox.Text.Trim().Length > 0)
@@ -131,8 +129,11 @@ public partial class BindingEditorWindow : Window
             {
                 Type = type,
                 Path = PathBox.Text.Trim(),
-                Args = string.IsNullOrWhiteSpace(ArgsBox.Text) ? null : ArgsBox.Text.Trim(),
+                Args = NullIfBlank(ArgsBox.Text),
+                Toggle = ToggleCloseSwitch.IsChecked == true ? true : null,
+                Process = ToggleCloseSwitch.IsChecked == true ? NullIfBlank(ToggleProcessBox.Text) : null,
             },
+            "close" => new ActionSpec { Type = type, Process = NullIfBlank(CloseProcessBox.Text) },
             "text" => new ActionSpec { Type = type, Value = ValueBox.Text.Replace("\r\n", "\n") },
             "sendKeys" => new ActionSpec { Type = type, Keys = KeysRecorder.Keys },
             "macro" => new ActionSpec { Type = type, Steps = _steps.Select(s => s.ToSpec()).ToList() },
@@ -140,11 +141,13 @@ public partial class BindingEditorWindow : Window
         };
     }
 
+    private static string? NullIfBlank(string text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+
     private string? Validate(HotkeyBinding binding)
     {
         if (TriggerRecorder.Keys.Length == 0)
             return Loc.T("Ed.Err.NoKeys");
-        if (CheckedTag(ModeChips) == "sequence" && !_sequence.Any(s => s.Keys.Length > 0))
+        if (CheckedTag(ModeChips) == "sequence" && TriggerSpec.SplitSteps(binding.Trigger).Length < 2)
             return Loc.T("Ed.Err.NoNext");
         if (!TriggerSpec.TryParse(binding, out var trigger, out var triggerError))
             return triggerError;
@@ -179,6 +182,7 @@ public partial class BindingEditorWindow : Window
         {
             _confirmDelete = true;
             DeleteButton.SetResourceReference(ContentProperty, "Ed.DeleteConfirm");
+            Motion.FadeIn(DeleteButton, fromY: 0, ms: 160);
             return;
         }
         if (!_viewModel.DeleteBinding(_original, out var error))
@@ -250,9 +254,9 @@ public partial class BindingEditorWindow : Window
     private void OnTriggerChanged()
     {
         HideError();
-        if (TriggerSpec.TryParse(TriggerRecorder.Keys, Build().Mode, null, out var trigger, out _)
-            && CheckedTag(ModeChips) != "sequence"
-            && _viewModel.FindConflict(trigger!, AppBox.Text, _original) is { } other)
+        var binding = Build();
+        if (TriggerSpec.TryParse(binding, out var trigger, out _)
+            && _viewModel.FindConflict(trigger!, binding.App, _original) is { } other)
         {
             ShowError(Loc.F("Ed.Err.Conflict", other));
         }
@@ -260,14 +264,18 @@ public partial class BindingEditorWindow : Window
 
     private void OnModeChecked(object sender, RoutedEventArgs e)
     {
-        if (SequencePanel is null)
-            return; // Fires during InitializeComponent before the panels exist.
+        if (ModeHint is null)
+            return; // Fires during InitializeComponent before the rest of the form exists.
 
         var mode = (string)((RadioButton)sender).Tag;
-        SequencePanel.Visibility = mode == "sequence" ? Visibility.Visible : Visibility.Collapsed;
-        HoldPanel.Visibility = mode == "hold" ? Visibility.Visible : Visibility.Collapsed;
-        if (mode == "sequence" && _sequence.Count == 0)
-            _sequence.Add(new SequenceStep());
+        MoveModeThumb(animate: !_loading);
+
+        // Leaving Sequence keeps only the first step, so the box never shows keys that won't be saved.
+        TriggerRecorder.Multi = mode == "sequence";
+        if (mode != "sequence" && TriggerSpec.SplitSteps(TriggerRecorder.Keys).Length > 1)
+            TriggerRecorder.Keys = TriggerSpec.SplitSteps(TriggerRecorder.Keys)[0];
+
+        SetShown(HoldPanel, mode == "hold");
         if (mode is "doubleTap" or "hold" or "sequence")
         {
             ModeHint.SetResourceReference(TextBlock.TextProperty, mode switch
@@ -277,6 +285,8 @@ public partial class BindingEditorWindow : Window
                 _ => "Ed.Hint.Sequence",
             });
             ModeHint.Visibility = Visibility.Visible;
+            if (!_loading)
+                Motion.FadeIn(ModeHint, fromY: 4, ms: 180);
         }
         else
         {
@@ -285,10 +295,28 @@ public partial class BindingEditorWindow : Window
         HideError();
     }
 
-    private void OnAddSequenceStep(object sender, RoutedEventArgs e) => _sequence.Add(new SequenceStep());
+    private void OnModeBarSizeChanged(object sender, SizeChangedEventArgs e) => MoveModeThumb(animate: false);
 
-    private void OnRemoveSequenceStep(object sender, RoutedEventArgs e) =>
-        _sequence.Remove((SequenceStep)((FrameworkElement)sender).DataContext);
+    /// <summary>Sizes the selection pill to one option and glides it under the checked one.</summary>
+    private void MoveModeThumb(bool animate)
+    {
+        var options = ModeChips.Children.OfType<RadioButton>().ToList();
+        int index = options.FindIndex(r => r.IsChecked == true);
+        if (index < 0 || ModeChips.ActualWidth <= 0)
+            return;
+        double width = ModeChips.ActualWidth / options.Count;
+        ModeThumb.Width = width;
+        ModeThumb.Height = ModeChips.ActualHeight;
+        if (animate)
+        {
+            Motion.SlideX(ModeThumbShift, index * width);
+        }
+        else
+        {
+            ModeThumbShift.BeginAnimation(System.Windows.Media.TranslateTransform.XProperty, null);
+            ModeThumbShift.X = index * width;
+        }
+    }
 
     private void OnActionTypeChecked(object sender, RoutedEventArgs e)
     {
@@ -296,14 +324,34 @@ public partial class BindingEditorWindow : Window
             return; // Fires during InitializeComponent before the panels exist.
 
         var type = (string)((RadioButton)sender).Tag;
-        RunPanel.Visibility = type == "run" ? Visibility.Visible : Visibility.Collapsed;
-        TextPanel.Visibility = type == "text" ? Visibility.Visible : Visibility.Collapsed;
-        KeysPanel.Visibility = type == "sendKeys" ? Visibility.Visible : Visibility.Collapsed;
-        MacroPanel.Visibility = type == "macro" ? Visibility.Visible : Visibility.Collapsed;
-        MediaPanel.Visibility = type == "media" ? Visibility.Visible : Visibility.Collapsed;
+        SetShown(RunPanel, type == "run");
+        SetShown(ClosePanel, type == "close");
+        SetShown(TextPanel, type == "text");
+        SetShown(KeysPanel, type == "sendKeys");
+        SetShown(MacroPanel, type == "macro");
+        SetShown(MediaPanel, type == "media");
         if (type != "sendKeys")
             KeysRecorder.Cancel();
         HideError();
+    }
+
+    private void OnToggleCloseChanged(object sender, RoutedEventArgs e) =>
+        SetShown(ToggleTargetPanel, ToggleCloseSwitch.IsChecked == true);
+
+    // The "which app to close" box suggests the program itself, which is right most of the time.
+    private void OnPathChanged(object sender, TextChangedEventArgs e)
+    {
+        var target = ActionRunner.ToggleTarget(new ActionSpec { Path = PathBox.Text });
+        ToggleProcessBox.Tag = target is null ? "notepad.exe" : System.IO.Path.GetFileName(target.Trim('"'));
+    }
+
+    /// <summary>Shows or hides a part of the form, easing it in when it appears.</summary>
+    private void SetShown(UIElement element, bool shown)
+    {
+        bool wasShown = element.Visibility == Visibility.Visible;
+        element.Visibility = shown ? Visibility.Visible : Visibility.Collapsed;
+        if (shown && !wasShown && !_loading)
+            Motion.FadeIn(element, fromY: 6, ms: 200);
     }
 
     private void OnAddStep(object sender, RoutedEventArgs e)
@@ -315,6 +363,12 @@ public partial class BindingEditorWindow : Window
 
     private void OnAddStepOfType(object sender, RoutedEventArgs e) =>
         _steps.Add(new MacroStep((string)((MenuItem)sender).Tag));
+
+    private void OnStepLoaded(object sender, RoutedEventArgs e)
+    {
+        if (!_loading)
+            Motion.FadeIn((UIElement)sender, fromY: 6, ms: 180);
+    }
 
     private void OnRemoveStep(object sender, RoutedEventArgs e) => _steps.Remove(StepOf(sender));
 
@@ -338,16 +392,21 @@ public partial class BindingEditorWindow : Window
 
     private static MacroStep StepOf(object sender) => (MacroStep)((FrameworkElement)sender).DataContext;
 
+    /// <summary>Offers running apps for the text box named in the button's Tag.</summary>
     private void OnChooseApp(object sender, RoutedEventArgs e)
     {
+        var box = (TextBox)((Button)sender).Tag;
         var menu = new ContextMenu { PlacementTarget = (UIElement)sender };
-        var everyApp = new MenuItem { Header = Loc.T("Ed.EveryApp") };
-        everyApp.Click += (_, _) => AppBox.Text = "";
-        menu.Items.Add(everyApp);
+        if (box == AppBox)
+        {
+            var everyApp = new MenuItem { Header = Loc.T("Ed.EveryApp") };
+            everyApp.Click += (_, _) => box.Text = "";
+            menu.Items.Add(everyApp);
+        }
         foreach (var name in RunningAppNames())
         {
             var item = new MenuItem { Header = name };
-            item.Click += (_, _) => AppBox.Text = name;
+            item.Click += (_, _) => box.Text = name;
             menu.Items.Add(item);
         }
         menu.IsOpen = true;
@@ -395,8 +454,11 @@ public partial class BindingEditorWindow : Window
 
     private void ShowError(string message)
     {
+        bool wasShown = ErrorText.Visibility == Visibility.Visible && ErrorText.Text == message;
         ErrorText.Text = message;
         ErrorText.Visibility = Visibility.Visible;
+        if (!wasShown)
+            Motion.FadeIn(ErrorText, fromY: 4, ms: 180);
     }
 
     private void HideError() => ErrorText.Visibility = Visibility.Collapsed;

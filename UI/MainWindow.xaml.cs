@@ -177,5 +177,9 @@ public partial class MainWindow : Window
     {
         foreach (var candidate in new FrameworkElement[] { BindingsPage, ProfilesPage, SettingsPage })
             candidate.Visibility = candidate == page ? Visibility.Visible : Visibility.Collapsed;
+        Motion.FadeIn(page, fromY: 10, ms: 220);
     }
+
+    // Rows rise into place as they appear, so a switched filter or a new binding doesn't just blink in.
+    private void OnRowLoaded(object sender, RoutedEventArgs e) => Motion.FadeIn((UIElement)sender, fromY: 4, ms: 160);
 }

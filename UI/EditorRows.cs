@@ -19,18 +19,6 @@ public abstract class Observable : INotifyPropertyChanged
     }
 }
 
-/// <summary>An extra combo in a key sequence ("then press …").</summary>
-public sealed class SequenceStep : Observable
-{
-    private string _keys = "";
-
-    public string Keys
-    {
-        get => _keys;
-        set => Set(ref _keys, value);
-    }
-}
-
 /// <summary>One editable step of a macro.</summary>
 public sealed class MacroStep : Observable
 {
@@ -45,7 +33,7 @@ public sealed class MacroStep : Observable
         Type = type;
     }
 
-    /// <summary>sendKeys, text, delay, run, or media (media steps only come from config.json).</summary>
+    /// <summary>sendKeys, text, delay, run, close, or media (media steps only come from config.json).</summary>
     public string Type { get; }
 
     public string Label => Loc.T(Type switch
@@ -54,6 +42,7 @@ public sealed class MacroStep : Observable
         "text" => "Step.Type",
         "delay" => "Step.Wait",
         "run" => "Step.Run",
+        "close" => "Step.Close",
         _ => "Step.Media",
     });
 
@@ -102,6 +91,7 @@ public sealed class MacroStep : Observable
             "text" => "text",
             "delay" => "delay",
             "run" => "run",
+            "close" => "close",
             _ => "media",
         };
         return new MacroStep(type)
@@ -109,7 +99,7 @@ public sealed class MacroStep : Observable
             Keys = spec.Keys ?? "",
             Text = spec.Value ?? "",
             Ms = spec.Ms?.ToString() ?? "100",
-            Path = spec.Path ?? "",
+            Path = (type == "close" ? spec.Process : spec.Path) ?? "",
             Command = spec.Command,
             Args = spec.Args,
         };
@@ -122,6 +112,7 @@ public sealed class MacroStep : Observable
         // An unparseable number becomes -1 so validation reports it.
         "delay" => new ActionSpec { Type = "delay", Ms = int.TryParse(Ms.Trim(), out int ms) ? ms : -1 },
         "run" => new ActionSpec { Type = "run", Path = Path.Trim(), Args = Args },
+        "close" => new ActionSpec { Type = "close", Process = Path.Trim() },
         _ => new ActionSpec { Type = "media", Command = Command },
     };
 }

@@ -39,8 +39,8 @@ public sealed class HotkeyBinding
 
 /// <summary>
 /// One action. Which fields matter depends on <see cref="Type"/>:
-/// run (path, args), text (value), sendKeys (keys), media (command),
-/// macro (steps), and delay (ms, only inside a macro).
+/// run (path, args, toggle, process), close (process), text (value), sendKeys (keys),
+/// media (command), macro (steps), and delay (ms, only inside a macro).
 /// </summary>
 public sealed class ActionSpec
 {
@@ -52,4 +52,13 @@ public sealed class ActionSpec
     public string? Command { get; set; }
     public List<ActionSpec>? Steps { get; set; }
     public int? Ms { get; set; }
+
+    /// <summary>For run: when the program is already open, the same keys close it instead.</summary>
+    public bool? Toggle { get; set; }
+
+    /// <summary>
+    /// App to close, such as "notepad.exe": the target of close, and for a toggling run
+    /// the app to look for when it isn't the program in <see cref="Path"/> (wt.exe opens WindowsTerminal.exe).
+    /// </summary>
+    public string? Process { get; set; }
 }

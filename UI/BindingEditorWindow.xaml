@@ -14,7 +14,7 @@
     </WindowChrome.WindowChrome>
 
     <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="1">
-        <DockPanel>
+        <DockPanel x:Name="Body">
             <!-- Header doubles as the drag handle -->
             <DockPanel DockPanel.Dock="Top" Background="Transparent" Margin="24,20,24,0"
                        MouseLeftButtonDown="OnDragHeader">
@@ -55,47 +55,40 @@
                     <Style TargetType="ScrollBar" BasedOn="{StaticResource ThinVerticalScrollBar}"/>
                 </ScrollViewer.Resources>
                 <StackPanel Margin="24,0,24,0">
-                    <local:KeyRecorder x:Name="TriggerRecorder" Margin="0,16,0,0" IdleHintKey="Rec.Idle"/>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.HowToPress}"/>
+                    <!-- Segmented control: the white pill slides to the chosen option -->
+                    <Border Background="{StaticResource SandBrush}" CornerRadius="10" Padding="3">
+                        <Grid>
+                            <Border x:Name="ModeThumb" Background="{StaticResource CardBrush}" CornerRadius="8"
+                                    BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+                                    HorizontalAlignment="Left">
+                                <Border.RenderTransform>
+                                    <TranslateTransform x:Name="ModeThumbShift"/>
+                                </Border.RenderTransform>
+                            </Border>
+                            <UniformGrid x:Name="ModeChips" Rows="1" SizeChanged="OnModeBarSizeChanged">
+                                <RadioButton Style="{StaticResource Segment}" GroupName="Mode" Tag="press"
+                                             Content="{DynamicResource Mode.Press}" IsChecked="True" Checked="OnModeChecked"/>
+                                <RadioButton Style="{StaticResource Segment}" GroupName="Mode" Tag="doubleTap"
+                                             Content="{DynamicResource Mode.DoubleTap}" Checked="OnModeChecked"/>
+                                <RadioButton Style="{StaticResource Segment}" GroupName="Mode" Tag="hold"
+                                             Content="{DynamicResource Mode.Hold}" Checked="OnModeChecked"/>
+                                <RadioButton Style="{StaticResource Segment}" GroupName="Mode" Tag="sequence"
+                                             Content="{DynamicResource Mode.Sequence}" Checked="OnModeChecked"/>
+                            </UniformGrid>
+                        </Grid>
+                    </Border>
 
-                    <WrapPanel x:Name="ModeChips" Margin="0,10,0,0">
-                        <RadioButton Style="{StaticResource Chip}" GroupName="Mode" Tag="press" Content="{DynamicResource Mode.Press}"
-                                     IsChecked="True" Checked="OnModeChecked"/>
-                        <RadioButton Style="{StaticResource Chip}" GroupName="Mode" Tag="doubleTap" Content="{DynamicResource Mode.DoubleTap}"
-                                     Checked="OnModeChecked"/>
-                        <RadioButton Style="{StaticResource Chip}" GroupName="Mode" Tag="hold" Content="{DynamicResource Mode.Hold}"
-                                     Checked="OnModeChecked"/>
-                        <RadioButton Style="{StaticResource Chip}" GroupName="Mode" Tag="sequence" Content="{DynamicResource Mode.Sequence}"
-                                     Checked="OnModeChecked"/>
-                    </WrapPanel>
+                    <local:KeyRecorder x:Name="TriggerRecorder" Margin="0,10,0,0" IdleHintKey="Rec.Idle"/>
 
-                    <StackPanel x:Name="SequencePanel" Visibility="Collapsed">
-                        <ItemsControl x:Name="SequenceList">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <DockPanel Margin="0,0,0,6">
-                                        <TextBlock DockPanel.Dock="Left" Style="{StaticResource Muted}" Text="{DynamicResource Ed.Then}"
-                                                   Width="36" VerticalAlignment="Center"/>
-                                        <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}"
-                                                Content="&#xE711;" ToolTip="{DynamicResource Ed.Remove}" Margin="6,0,0,0"
-                                                Click="OnRemoveSequenceStep"/>
-                                        <local:KeyRecorder Compact="True" Keys="{Binding Keys}"
-                                                           IdleHintKey="Rec.IdleNext"/>
-                                    </DockPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <Button Style="{StaticResource LinkButton}" Content="{DynamicResource Ed.AddNextKeys}" HorizontalAlignment="Left"
-                                Click="OnAddSequenceStep"/>
-                    </StackPanel>
-
-                    <StackPanel x:Name="HoldPanel" Visibility="Collapsed">
-                        <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.HoldFor}" Margin="0,6,0,6"/>
-                        <TextBox x:Name="HoldBox" Style="{StaticResource Field}" Tag="500" Width="120"
-                                 HorizontalAlignment="Left"/>
-                    </StackPanel>
-
-                    <TextBlock x:Name="ModeHint" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"
+                    <TextBlock x:Name="ModeHint" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="2,8,0,0"
                                Visibility="Collapsed"/>
+
+                    <StackPanel x:Name="HoldPanel" Orientation="Horizontal" Margin="2,10,0,0" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource Muted}" Text="{DynamicResource Ed.HoldFor}"
+                                   VerticalAlignment="Center"/>
+                        <TextBox x:Name="HoldBox" Style="{StaticResource Field}" Tag="500" Width="90" Margin="10,0,0,0"/>
+                    </StackPanel>
 
                     <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.Name}"/>
                     <TextBox x:Name="NameBox" Style="{StaticResource Field}" Tag="{DynamicResource Ed.NamePlaceholder}"/>
@@ -103,7 +96,7 @@
                     <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.OnlyInApp}"/>
                     <DockPanel>
                         <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="{DynamicResource Ed.Choose}"
-                                Padding="12,7" Margin="8,0,0,0" Click="OnChooseApp"/>
+                                Padding="12,7" Margin="8,0,0,0" Click="OnChooseApp" Tag="{Binding ElementName=AppBox}"/>
                         <TextBox x:Name="AppBox" Style="{StaticResource Field}" Tag="{DynamicResource Ed.EveryApp}"/>
                     </DockPanel>
 
@@ -111,6 +104,8 @@
                     <WrapPanel x:Name="ActionChips">
                         <RadioButton Style="{StaticResource Chip}" GroupName="ActionType" Tag="run" Content="{DynamicResource Act.Run}"
                                      IsChecked="True" Checked="OnActionTypeChecked"/>
+                        <RadioButton Style="{StaticResource Chip}" GroupName="ActionType" Tag="close" Content="{DynamicResource Act.Close}"
+                                     Checked="OnActionTypeChecked"/>
                         <RadioButton Style="{StaticResource Chip}" GroupName="ActionType" Tag="text" Content="{DynamicResource Act.Text}"
                                      Checked="OnActionTypeChecked"/>
                         <RadioButton Style="{StaticResource Chip}" GroupName="ActionType" Tag="sendKeys" Content="{DynamicResource Act.Keys}"
@@ -126,12 +121,43 @@
                         <DockPanel>
                             <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="{DynamicResource Ed.Browse}"
                                     Padding="12,7" Margin="8,0,0,0" Click="OnBrowse"/>
-                            <TextBox x:Name="PathBox" Style="{StaticResource Field}" Tag="notepad.exe"/>
+                            <TextBox x:Name="PathBox" Style="{StaticResource Field}" Tag="notepad.exe"
+                                     TextChanged="OnPathChanged"/>
                         </DockPanel>
                         <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.Args}"/>
                         <TextBox x:Name="ArgsBox" Style="{StaticResource Field}" Tag="--new-window"/>
+                        <DockPanel Margin="0,16,0,0">
+                            <ToggleButton x:Name="ToggleCloseSwitch" DockPanel.Dock="Right" Style="{StaticResource Switch}"
+                                          VerticalAlignment="Center" Checked="OnToggleCloseChanged"
+                                          Unchecked="OnToggleCloseChanged"/>
+                            <StackPanel Margin="0,0,12,0">
+                                <TextBlock Text="{DynamicResource Ed.ToggleClose}"/>
+                                <TextBlock Style="{StaticResource Muted}" Text="{DynamicResource Ed.ToggleCloseHint}"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </DockPanel>
+                        <StackPanel x:Name="ToggleTargetPanel" Visibility="Collapsed">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.CloseWhich}"/>
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}"
+                                        Content="{DynamicResource Ed.Choose}" Padding="12,7" Margin="8,0,0,0"
+                                        Click="OnChooseApp" Tag="{Binding ElementName=ToggleProcessBox}"/>
+                                <TextBox x:Name="ToggleProcessBox" Style="{StaticResource Field}" Tag="notepad.exe"/>
+                            </DockPanel>
+                        </StackPanel>
                     </StackPanel>
 
+                    <StackPanel x:Name="ClosePanel" Visibility="Collapsed">
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.AppToClose}"/>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}"
+                                    Content="{DynamicResource Ed.Choose}" Padding="12,7" Margin="8,0,0,0"
+                                    Click="OnChooseApp" Tag="{Binding ElementName=CloseProcessBox}"/>
+                            <TextBox x:Name="CloseProcessBox" Style="{StaticResource Field}" Tag="notepad.exe"/>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Muted}" Text="{DynamicResource Ed.CloseHint}" TextWrapping="Wrap"
+                                   Margin="2,8,0,0"/>
+                    </StackPanel>
                     <StackPanel x:Name="TextPanel" Visibility="Collapsed">
                         <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.TextToType}"/>
                         <TextBox x:Name="ValueBox" Style="{StaticResource Field}" Tag="you@example.com"
@@ -149,7 +175,7 @@
                         <ItemsControl x:Name="StepList">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,0,0,6">
+                                    <Grid Margin="0,0,0,6" Loaded="OnStepLoaded">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="20"/>
                                             <ColumnDefinition Width="44"/>
@@ -201,6 +227,9 @@
                                         <DataTrigger Binding="{Binding Type}" Value="run">
                                             <Setter TargetName="StepPath" Property="Visibility" Value="Visible"/>
                                         </DataTrigger>
+                                        <DataTrigger Binding="{Binding Type}" Value="close">
+                                            <Setter TargetName="StepPath" Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
                                         <DataTrigger Binding="{Binding Type}" Value="media">
                                             <Setter TargetName="StepMedia" Property="Visibility" Value="Visible"/>
                                         </DataTrigger>
@@ -216,6 +245,7 @@
                                     <MenuItem Header="{DynamicResource Menu.TypeText}" Tag="text" Click="OnAddStepOfType"/>
                                     <MenuItem Header="{DynamicResource Menu.Wait}" Tag="delay" Click="OnAddStepOfType"/>
                                     <MenuItem Header="{DynamicResource Menu.Run}" Tag="run" Click="OnAddStepOfType"/>
+                                    <MenuItem Header="{DynamicResource Menu.Close}" Tag="close" Click="OnAddStepOfType"/>
                                 </ContextMenu>
                             </Button.ContextMenu>
                         </Button>

@@ -2,12 +2,16 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- Earth-tone palette -->
+    <Color x:Key="CardColor">#FBF8F3</Color>
+    <Color x:Key="LineColor">#E6DCCB</Color>
+    <Color x:Key="ClayColor">#8B5E3C</Color>
     <SolidColorBrush x:Key="BgBrush" Color="#F5EFE6"/>
-    <SolidColorBrush x:Key="CardBrush" Color="#FBF8F3"/>
-    <SolidColorBrush x:Key="LineBrush" Color="#E6DCCB"/>
+    <SolidColorBrush x:Key="CardBrush" Color="{StaticResource CardColor}"/>
+    <SolidColorBrush x:Key="LineBrush" Color="{StaticResource LineColor}"/>
+    <SolidColorBrush x:Key="SandBrush" Color="#EDE4D6"/>
     <SolidColorBrush x:Key="InkBrush" Color="#3B2F26"/>
     <SolidColorBrush x:Key="MuteBrush" Color="#8A7A69"/>
-    <SolidColorBrush x:Key="ClayBrush" Color="#8B5E3C"/>
+    <SolidColorBrush x:Key="ClayBrush" Color="{StaticResource ClayColor}"/>
     <SolidColorBrush x:Key="SageBrush" Color="#7D8B6A"/>
     <SolidColorBrush x:Key="TerraBrush" Color="#B5653F"/>
     <SolidColorBrush x:Key="TerraSoftBrush" Color="#F3E1D6"/>
@@ -16,6 +20,46 @@
     <FontFamily x:Key="UiFont">Inter, Segoe UI Variable Text, Segoe UI</FontFamily>
     <FontFamily x:Key="MonoFont">JetBrains Mono, Cascadia Mono, Consolas</FontFamily>
     <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+    <!--
+        Motion. Templates fade a "Hover" or "Selected" overlay in and out, and squash "Bd" slightly
+        when pressed. Only opacity and transforms move, so nothing re-runs layout.
+    -->
+    <CubicEase x:Key="EaseOut" EasingMode="EaseOut"/>
+    <Storyboard x:Key="HoverIn">
+        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/>
+    </Storyboard>
+    <Storyboard x:Key="HoverOut">
+        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/>
+    </Storyboard>
+    <Storyboard x:Key="SelectIn">
+        <DoubleAnimation Storyboard.TargetName="Selected" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.16"
+                         EasingFunction="{StaticResource EaseOut}"/>
+    </Storyboard>
+    <Storyboard x:Key="SelectOut">
+        <DoubleAnimation Storyboard.TargetName="Selected" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.16"
+                         EasingFunction="{StaticResource EaseOut}"/>
+    </Storyboard>
+    <Storyboard x:Key="PressIn">
+        <DoubleAnimation Storyboard.TargetName="Bd" Duration="0:0:0.08" To="0.97"
+                         Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"/>
+        <DoubleAnimation Storyboard.TargetName="Bd" Duration="0:0:0.08" To="0.97"
+                         Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"/>
+    </Storyboard>
+    <Storyboard x:Key="PressOut">
+        <DoubleAnimation Storyboard.TargetName="Bd" Duration="0:0:0.18" To="1" EasingFunction="{StaticResource EaseOut}"
+                         Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"/>
+        <DoubleAnimation Storyboard.TargetName="Bd" Duration="0:0:0.18" To="1" EasingFunction="{StaticResource EaseOut}"
+                         Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"/>
+    </Storyboard>
+    <Storyboard x:Key="FocusIn">
+        <ColorAnimation Storyboard.TargetName="Bd" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                        To="{StaticResource ClayColor}" Duration="0:0:0.15"/>
+    </Storyboard>
+    <Storyboard x:Key="FocusOut">
+        <ColorAnimation Storyboard.TargetName="Bd" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                        To="{StaticResource LineColor}" Duration="0:0:0.2"/>
+    </Storyboard>
 
     <Style x:Key="Muted" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{StaticResource MuteBrush}"/>
@@ -46,16 +90,23 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="8"
-                            Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
+                    <Grid x:Name="Bd" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <ScaleTransform/>
+                        </Grid.RenderTransform>
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8"/>
+                        <Border x:Name="Hover" Background="#1FFFFFFF" CornerRadius="8" Opacity="0"/>
+                        <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Opacity" Value="0.88"/>
+                            <Trigger.EnterActions><BeginStoryboard Storyboard="{StaticResource HoverIn}"/></Trigger.EnterActions>
+                            <Trigger.ExitActions><BeginStoryboard Storyboard="{StaticResource HoverOut}"/></Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Opacity" Value="0.75"/>
+                            <Trigger.EnterActions><BeginStoryboard Storyboard="{StaticResource PressIn}"/></Trigger.EnterActions>
+                            <Trigger.ExitActions><BeginStoryboard Storyboard="{StaticResource PressOut}"/></Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -71,16 +122,23 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="Transparent" BorderBrush="{StaticResource LineBrush}"
-                            BorderThickness="1" CornerRadius="8" Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
+                    <Grid x:Name="Bd" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <ScaleTransform/>
+                        </Grid.RenderTransform>
+                        <Border x:Name="Hover" Background="{StaticResource CardBrush}" CornerRadius="8" Opacity="0"/>
+                        <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="8"/>
+                        <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource CardBrush}"/>
+                            <Trigger.EnterActions><BeginStoryboard Storyboard="{StaticResource HoverIn}"/></Trigger.EnterActions>
+                            <Trigger.ExitActions><BeginStoryboard Storyboard="{StaticResource HoverOut}"/></Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource LineBrush}"/>
+                            <Trigger.EnterActions><BeginStoryboard Storyboard="{StaticResource PressIn}"/></Trigger.EnterActions>
+                            <Trigger.ExitActions><BeginStoryboard Storyboard="{StaticResource PressOut}"/></Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -111,15 +169,18 @@
         <Setter Property="Foreground" Value="{StaticResource MuteBrush}"/>
         <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
         <Setter Property="FontSize" Value="10"/>
+        <Setter Property="Tag" Value="{StaticResource LineBrush}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="Transparent">
+                    <Grid Background="Transparent">
+                        <Border x:Name="Hover" Background="{TemplateBinding Tag}" Opacity="0"/>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource LineBrush}"/>
+                            <Trigger.EnterActions><BeginStoryboard Storyboard="{StaticResource HoverIn}"/></Trigger.EnterActions>
+                            <Trigger.ExitActions><BeginStoryboard Storyboard="{StaticResource HoverOut}"/></Trigger.ExitActions>
                             <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -129,21 +190,12 @@
     </Style>
 
     <Style x:Key="CloseButton" TargetType="Button" BasedOn="{StaticResource ChromeButton}">
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="Transparent">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource TerraBrush}"/>
-                            <Setter Property="Foreground" Value="{StaticResource CardBrush}"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
+        <Setter Property="Tag" Value="{StaticResource TerraBrush}"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource CardBrush}"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="NavItem" TargetType="RadioButton">
@@ -155,15 +207,20 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="Bd" Background="Transparent" CornerRadius="8" Padding="12,8">
-                        <ContentPresenter/>
-                    </Border>
+                    <Grid Background="Transparent">
+                        <Border x:Name="Hover" Background="{StaticResource SandBrush}" CornerRadius="8" Opacity="0"/>
+                        <Border x:Name="Selected" Background="{StaticResource CardBrush}" CornerRadius="8" Opacity="0"/>
+                        <ContentPresenter Margin="12,8"/>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions><BeginStoryboard Storyboard="{StaticResource HoverIn}"/></Trigger.EnterActions>
+                            <Trigger.ExitActions><BeginStoryboard Storyboard="{StaticResource HoverOut}"/></Trigger.ExitActions>
                             <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource CardBrush}"/>
+                            <Trigger.EnterActions><BeginStoryboard Storyboard="{StaticResource SelectIn}"/></Trigger.EnterActions>
+                            <Trigger.ExitActions><BeginStoryboard Storyboard="{StaticResource SelectOut}"/></Trigger.ExitActions>
                             <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -178,14 +235,37 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ToggleButton">
                     <Grid Width="34" Height="20" Background="Transparent">
-                        <Border x:Name="Track" CornerRadius="10" Background="{StaticResource LineBrush}"/>
-                        <Ellipse x:Name="Thumb" Width="14" Height="14" Fill="{StaticResource CardBrush}"
-                                 HorizontalAlignment="Left" Margin="3,0,0,0"/>
+                        <Border CornerRadius="10" Background="{StaticResource LineBrush}"/>
+                        <Border x:Name="Selected" CornerRadius="10" Background="{StaticResource SageBrush}" Opacity="0"/>
+                        <Ellipse Width="14" Height="14" Fill="{StaticResource CardBrush}" HorizontalAlignment="Left"
+                                 Margin="3,0,0,0">
+                            <Ellipse.RenderTransform>
+                                <TranslateTransform x:Name="ThumbShift"/>
+                            </Ellipse.RenderTransform>
+                        </Ellipse>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Track" Property="Background" Value="{StaticResource SageBrush}"/>
-                            <Setter TargetName="Thumb" Property="Margin" Value="17,0,0,0"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbShift" Storyboard.TargetProperty="X"
+                                                         To="14" Duration="0:0:0.2" EasingFunction="{StaticResource EaseOut}"/>
+                                        <DoubleAnimation Storyboard.TargetName="Selected" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.2"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ThumbShift" Storyboard.TargetProperty="X"
+                                                         To="0" Duration="0:0:0.2" EasingFunction="{StaticResource EaseOut}"/>
+                                        <DoubleAnimation Storyboard.TargetName="Selected" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.2"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -200,8 +280,11 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
-                    <Border x:Name="Bd" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}"
-                            BorderThickness="1" CornerRadius="8" Padding="12,8">
+                    <Border x:Name="Bd" Background="{StaticResource CardBrush}" BorderThickness="1" CornerRadius="8"
+                            Padding="12,8">
+                        <Border.BorderBrush>
+                            <SolidColorBrush Color="{StaticResource LineColor}"/>
+                        </Border.BorderBrush>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -220,7 +303,8 @@
                             <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
                         </Trigger>
                         <Trigger Property="IsKeyboardFocused" Value="True">
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource ClayBrush}"/>
+                            <Trigger.EnterActions><BeginStoryboard Storyboard="{StaticResource FocusIn}"/></Trigger.EnterActions>
+                            <Trigger.ExitActions><BeginStoryboard Storyboard="{StaticResource FocusOut}"/></Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -238,13 +322,22 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="Transparent" CornerRadius="6">
+                    <Grid x:Name="Bd" Background="Transparent" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <ScaleTransform/>
+                        </Grid.RenderTransform>
+                        <Border x:Name="Hover" Background="{StaticResource LineBrush}" CornerRadius="6" Opacity="0"/>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource LineBrush}"/>
+                            <Trigger.EnterActions><BeginStoryboard Storyboard="{StaticResource HoverIn}"/></Trigger.EnterActions>
+                            <Trigger.ExitActions><BeginStoryboard Storyboard="{StaticResource HoverOut}"/></Trigger.ExitActions>
                             <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Trigger.EnterActions><BeginStoryboard Storyboard="{StaticResource PressIn}"/></Trigger.EnterActions>
+                            <Trigger.ExitActions><BeginStoryboard Storyboard="{StaticResource PressOut}"/></Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -305,8 +398,11 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
-                    <Border x:Name="Bd" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}"
-                            BorderThickness="1" CornerRadius="8" Padding="10,8">
+                    <Border x:Name="Bd" Background="{StaticResource CardBrush}" BorderThickness="1" CornerRadius="8"
+                            Padding="10,8">
+                        <Border.BorderBrush>
+                            <SolidColorBrush Color="{StaticResource LineColor}"/>
+                        </Border.BorderBrush>
                         <Grid>
                             <TextBlock x:Name="Placeholder" Text="{TemplateBinding Tag}" Margin="2,0"
                                        Foreground="{StaticResource MuteBrush}" Visibility="Collapsed"
@@ -319,7 +415,8 @@
                             <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
                         </Trigger>
                         <Trigger Property="IsKeyboardFocused" Value="True">
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource ClayBrush}"/>
+                            <Trigger.EnterActions><BeginStoryboard Storyboard="{StaticResource FocusIn}"/></Trigger.EnterActions>
+                            <Trigger.ExitActions><BeginStoryboard Storyboard="{StaticResource FocusOut}"/></Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -335,18 +432,52 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="Bd" Background="Transparent" BorderBrush="{StaticResource LineBrush}"
-                            BorderThickness="1" CornerRadius="8" Padding="11,6">
-                        <ContentPresenter/>
+                    <Grid x:Name="Bd" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <ScaleTransform/>
+                        </Grid.RenderTransform>
+                        <Border x:Name="Hover" Background="{StaticResource CardBrush}" CornerRadius="8" Opacity="0"/>
+                        <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="8"/>
+                        <Border x:Name="Selected" Background="{StaticResource InkBrush}" CornerRadius="8" Opacity="0"/>
+                        <ContentPresenter Margin="11,6"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions><BeginStoryboard Storyboard="{StaticResource HoverIn}"/></Trigger.EnterActions>
+                            <Trigger.ExitActions><BeginStoryboard Storyboard="{StaticResource HoverOut}"/></Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Trigger.EnterActions><BeginStoryboard Storyboard="{StaticResource PressIn}"/></Trigger.EnterActions>
+                            <Trigger.ExitActions><BeginStoryboard Storyboard="{StaticResource PressOut}"/></Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Trigger.EnterActions><BeginStoryboard Storyboard="{StaticResource SelectIn}"/></Trigger.EnterActions>
+                            <Trigger.ExitActions><BeginStoryboard Storyboard="{StaticResource SelectOut}"/></Trigger.ExitActions>
+                            <Setter Property="Foreground" Value="{StaticResource BgBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- One option in a segmented control; the selection pill is drawn by the control and slides between options -->
+    <Style x:Key="Segment" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{StaticResource MuteBrush}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border Background="Transparent" Padding="6,7">
+                        <ContentPresenter HorizontalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource CardBrush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource InkBrush}"/>
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource InkBrush}"/>
-                            <Setter Property="Foreground" Value="{StaticResource BgBrush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -377,14 +508,33 @@
     </Style>
 
     <Style x:Key="Row" TargetType="Border">
-        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Background">
+            <Setter.Value>
+                <SolidColorBrush Color="#00FBF8F3"/>
+            </Setter.Value>
+        </Setter>
         <Setter Property="BorderBrush" Value="{StaticResource LineBrush}"/>
         <Setter Property="BorderThickness" Value="0,1,0,0"/>
         <Setter Property="Padding" Value="24,12"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{StaticResource CardBrush}"/>
+                <Trigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                            To="{StaticResource CardColor}" Duration="0:0:0.12"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                            To="#00FBF8F3" Duration="0:0:0.25"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </Trigger.ExitActions>
             </Trigger>
         </Style.Triggers>
     </Style>
