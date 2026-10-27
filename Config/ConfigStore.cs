@@ -9,8 +9,9 @@ using MacroInWZa007.Core;
 namespace MacroInWZa007.Config;
 
 /// <summary>
-/// Loads and saves %AppData%\MacroInWZa007\config.json and reports edits made to it
-/// from outside the app.
+/// Loads and saves config.json and reports edits made to it from outside the app.
+/// The file lives next to the exe when one is already there (portable mode),
+/// otherwise in %AppData%\MacroInWZa007.
 /// </summary>
 public sealed class ConfigStore : IDisposable
 {
@@ -22,7 +23,7 @@ public sealed class ConfigStore : IDisposable
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
         WriteIndented = true,
-        // Keeps "Ctrl+Alt+T" readable instead of "Ctrl+Alt+T" for people editing the file.
+        // Writes "+" as-is instead of as a unicode escape, so "Ctrl+Alt+T" stays readable when hand-edited.
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
@@ -32,7 +33,9 @@ public sealed class ConfigStore : IDisposable
 
     public ConfigStore()
     {
-        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MacroInWZa007");
+        var folder = IsPortable
+            ? AppContext.BaseDirectory
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MacroInWZa007");
         Directory.CreateDirectory(folder);
         FilePath = Path.Combine(folder, "config.json");
 
@@ -49,13 +52,17 @@ public sealed class ConfigStore : IDisposable
 
     public string FilePath { get; }
 
+    /// <summary>True when a config.json sits next to the exe, so settings travel with the folder.</summary>
+    public static bool IsPortable => File.Exists(Path.Combine(AppContext.BaseDirectory, "config.json"));
+
     /// <summary>Raised on a worker thread after config.json is edited outside the app.</summary>
     public event Action? Changed;
 
     /// <summary>Reads the config, creating a starter file on first run.</summary>
     public AppConfig Load()
     {
-        if (!File.Exists(FilePath))
+        // An empty file is how a fresh portable copy asks for the starter bindings.
+        if (!File.Exists(FilePath) || new FileInfo(FilePath).Length == 0)
         {
             var starter = CreateStarter();
             Save(starter);
