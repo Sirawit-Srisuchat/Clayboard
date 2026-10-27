@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Clayboard.Core;
@@ -10,6 +11,15 @@ public sealed class AppConfig
     /// <summary>How long a sequence waits for its next step, in milliseconds; null means the default.</summary>
     public int? SequenceTimeoutMs { get; set; }
 
+    public List<HotkeyBinding> Bindings { get; set; } = new();
+}
+
+/// <summary>A file of bindings made by Export, for backups and moving to another PC.</summary>
+public sealed class BindingsFile
+{
+    public string Format { get; set; } = "clayboard-bindings";
+    public int Version { get; set; } = 1;
+    public DateTime ExportedAt { get; set; } = DateTime.Now;
     public List<HotkeyBinding> Bindings { get; set; } = new();
 }
 

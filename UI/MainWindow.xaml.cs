@@ -1,13 +1,16 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Clayboard.Config;
 using Clayboard.Core;
 using Clayboard.Localization;
+using Microsoft.Win32;
 
 namespace Clayboard.UI;
 
@@ -121,6 +124,92 @@ public partial class MainWindow : Window
         _syncingStartupSwitch = true;
         StartupSwitch.IsChecked = StartupManager.IsEnabled;
         _syncingStartupSwitch = false;
+    }
+
+    private List<HotkeyBinding>? _pendingImport;
+
+    private string FileFilter => $"{Loc.T("Settings.FileFilter")} (*.json)|*.json";
+
+    private void OnExport(object sender, RoutedEventArgs e)
+    {
+        var dialog = new SaveFileDialog
+        {
+            Title = Loc.T("Settings.Export"),
+            Filter = FileFilter,
+            DefaultExt = ".json",
+            FileName = $"Clayboard-bindings-{DateTime.Now:yyyy-MM-dd}.json",
+        };
+        if (dialog.ShowDialog(this) != true)
+            return;
+        try
+        {
+            int count = _viewModel.ExportBindings(dialog.FileName);
+            ShowBackupStatus(Loc.F("Settings.ExportDone", count, Path.GetFileName(dialog.FileName)), isError: false);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ShowBackupStatus(Loc.F("Settings.ExportError", ex.Message), isError: true);
+        }
+    }
+
+    private void OnImport(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = Loc.T("Settings.Import"),
+            Filter = $"{FileFilter}|{Loc.T("Ed.AllFiles")} (*.*)|*.*",
+        };
+        if (dialog.ShowDialog(this) != true)
+            return;
+        try
+        {
+            var bindings = ConfigStore.ReadBindingsFile(dialog.FileName);
+            if (bindings.Count == 0)
+            {
+                ShowBackupStatus(Loc.T("Settings.ImportNone"), isError: true);
+                return;
+            }
+            // Ask how to merge before changing anything.
+            _pendingImport = bindings;
+            ImportFoundText.Text = Loc.F("Settings.ImportFound", bindings.Count, Path.GetFileName(dialog.FileName));
+            BackupStatus.Visibility = Visibility.Collapsed;
+            ImportChoice.Visibility = Visibility.Visible;
+            Motion.FadeIn(ImportChoice, fromY: 4);
+        }
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            ShowBackupStatus(Loc.F("Settings.ImportError", ex.Message), isError: true);
+        }
+    }
+
+    private void OnImportAdd(object sender, RoutedEventArgs e) => FinishImport(replace: false);
+
+    private void OnImportReplace(object sender, RoutedEventArgs e) => FinishImport(replace: true);
+
+    private void OnImportCancel(object sender, RoutedEventArgs e)
+    {
+        _pendingImport = null;
+        ImportChoice.Visibility = Visibility.Collapsed;
+    }
+
+    private void FinishImport(bool replace)
+    {
+        if (_pendingImport is null)
+            return;
+        var (added, backupPath) = _viewModel.ImportBindings(_pendingImport, replace);
+        _pendingImport = null;
+        ImportChoice.Visibility = Visibility.Collapsed;
+        ShowBackupStatus(replace
+            ? Loc.F("Settings.ImportReplaced", added, backupPath)
+            : Loc.F("Settings.ImportDone", added), isError: false);
+    }
+
+    private void ShowBackupStatus(string message, bool isError)
+    {
+        BackupStatus.Text = message;
+        BackupStatus.Foreground = (System.Windows.Media.Brush)FindResource(isError ? "TerraBrush" : "MuteBrush");
+        BackupStatus.Visibility = Visibility.Visible;
+        Motion.FadeIn(BackupStatus, fromY: 4);
     }
 
     private void OnSequenceWaitKeyDown(object sender, KeyEventArgs e)

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -76,6 +78,32 @@ public sealed class ConfigStore : IDisposable
 
     /// <summary>True when the last <see cref="Load"/> wrote the built-in starter bindings.</summary>
     public bool CreatedStarter { get; private set; }
+
+    // Far more than any real set of bindings; stops a wrong file (a video, say) from being read into memory.
+    private const long MaxImportBytes = 2 * 1024 * 1024;
+
+    /// <summary>Writes bindings to an export file.</summary>
+    public static void WriteBindingsFile(string path, IEnumerable<HotkeyBinding> bindings)
+    {
+        var file = new BindingsFile { Bindings = bindings.ToList() };
+        File.WriteAllText(path, JsonSerializer.Serialize(file, JsonOptions));
+    }
+
+    /// <summary>
+    /// Reads the bindings from an export file, or from a config.json, which has the same "bindings" list.
+    /// Throws <see cref="JsonException"/> or <see cref="IOException"/> when the file can't be used.
+    /// </summary>
+    public static List<HotkeyBinding> ReadBindingsFile(string path)
+    {
+        if (new FileInfo(path).Length > MaxImportBytes)
+            throw new IOException("The file is too large to be a bindings file.");
+        var file = JsonSerializer.Deserialize<BindingsFile>(File.ReadAllText(path), JsonOptions)
+                   ?? throw new JsonException("The file is empty.");
+        var bindings = (file.Bindings ?? new()).Where(b => b is not null).ToList();
+        foreach (var binding in bindings)
+            binding.Action ??= new ActionSpec();
+        return bindings;
+    }
 
     /// <summary>JSON exactly as config.json writes it, for fingerprinting actions.</summary>
     public static string Serialize(object value) => JsonSerializer.Serialize(value, JsonOptions);

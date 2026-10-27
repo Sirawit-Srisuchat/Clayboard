@@ -67,6 +67,52 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool HasUntrusted => UntrustedCount > 0;
     public string TrustBanner => Loc.F("Trust.Banner", string.Join(", ", Items.Where(i => !i.IsTrusted).Select(i => i.Name)));
 
+    /// <summary>Saves every binding to <paramref name="path"/>. Returns how many were written.</summary>
+    public int ExportBindings(string path)
+    {
+        ConfigStore.WriteBindingsFile(path, _config.Bindings);
+        return _config.Bindings.Count;
+    }
+
+    /// <summary>
+    /// Adds the bindings to the current ones, skipping exact duplicates, or replaces the current ones
+    /// after saving a backup copy. Imported actions start paused until allowed, like any change made
+    /// outside the app, so a shared file can't run anything the user hasn't looked at.
+    /// </summary>
+    /// <returns>How many were added, and the backup file when <paramref name="replace"/> made one.</returns>
+    public (int Added, string? BackupPath) ImportBindings(IReadOnlyList<HotkeyBinding> bindings, bool replace)
+    {
+        string? backupPath = null;
+        if (replace)
+        {
+            var folder = Path.Combine(ConfigStore.AppDataFolder, "backups");
+            Directory.CreateDirectory(folder);
+            backupPath = Path.Combine(folder, $"bindings-{DateTime.Now:yyyyMMdd-HHmmss}.json");
+            ConfigStore.WriteBindingsFile(backupPath, _config.Bindings);
+            _config.Bindings.Clear();
+        }
+
+        var existing = _config.Bindings.Select(IdentityOf).ToHashSet();
+        int added = 0;
+        foreach (var binding in bindings)
+        {
+            if (existing.Add(IdentityOf(binding)))
+            {
+                _config.Bindings.Add(binding);
+                added++;
+            }
+        }
+
+        RebuildItems();
+        if (!TrySave(out var error))
+            LoadError = error;
+        return (added, backupPath);
+    }
+
+    // Two bindings are the same import if they react to the same keys in the same app and do the same thing.
+    private static string IdentityOf(HotkeyBinding binding) =>
+        $"{binding.Trigger}|{binding.Mode}|{binding.App}|{ConfigStore.Serialize(binding.Action)}";
+
     /// <summary>Approves every binding that was changed outside the app, so it can run.</summary>
     public void AllowUntrusted()
     {
