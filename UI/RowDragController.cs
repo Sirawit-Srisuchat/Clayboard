@@ -260,14 +260,31 @@ internal sealed class RowDragController
     }
 
     // One small bitmap of the row, taken once; drawing the live row instead would re-render it every frame.
+    // Rendering the row directly would draw it at its offset inside the list, outside the bitmap, so it's
+    // painted through a VisualBrush into a rectangle that starts at the bitmap's corner.
     private static ImageSource Snapshot(FrameworkElement row)
     {
         var dpi = VisualTreeHelper.GetDpi(row);
+        var size = new Size(row.ActualWidth, row.ActualHeight);
+        var painter = new DrawingVisual();
+        using (var drawing = painter.RenderOpen())
+        {
+            // The view box pins the brush to the row's own box (which a VisualBrush measures from the row's
+            // offset in its panel); by default it would fit just the content, shifting text off its place.
+            var brush = new VisualBrush(row)
+            {
+                ViewboxUnits = BrushMappingMode.Absolute,
+                Viewbox = new Rect((Point)VisualTreeHelper.GetOffset(row), size),
+                Stretch = Stretch.Fill,
+            };
+            drawing.DrawRectangle(brush, null, new Rect(size));
+        }
+
         var bitmap = new RenderTargetBitmap(
-            Math.Max(1, (int)Math.Ceiling(row.ActualWidth * dpi.DpiScaleX)),
-            Math.Max(1, (int)Math.Ceiling(row.ActualHeight * dpi.DpiScaleY)),
+            Math.Max(1, (int)Math.Ceiling(size.Width * dpi.DpiScaleX)),
+            Math.Max(1, (int)Math.Ceiling(size.Height * dpi.DpiScaleY)),
             dpi.PixelsPerInchX, dpi.PixelsPerInchY, PixelFormats.Pbgra32);
-        bitmap.Render(row);
+        bitmap.Render(painter);
         bitmap.Freeze();
         return bitmap;
     }
