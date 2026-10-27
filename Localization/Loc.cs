@@ -66,7 +66,8 @@ public static class Loc
         var resources = new ResourceDictionary();
         foreach (var key in Strings.En.Keys)
             resources[key] = T(key);
-        resources["UiFont"] = new FontFamily(FontFor(Language));
+        // Bundled fonts need the base URI passed separately; a pack URI inside the name is silently ignored.
+        resources["UiFont"] = new FontFamily(new Uri("pack://application:,,,/"), FontFor(Language));
 
         var merged = Application.Current.Resources.MergedDictionaries;
         if (_resources is not null)
@@ -77,7 +78,7 @@ public static class Loc
         Changed?.Invoke();
     }
 
-    private const string Bundled = "pack://application:,,,/Assets/Fonts/#";
+    private const string Bundled = "./Assets/Fonts/#";
 
     // Inter (bundled) covers Latin and Cyrillic. Thai uses the bundled IBM Plex Sans Thai Looped, whose
     // looped letterforms stay easy to tell apart in long use. CJK falls to a Windows font for the script,
