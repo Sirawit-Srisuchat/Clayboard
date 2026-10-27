@@ -9,6 +9,12 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>MacroInWZa007</RootNamespace>
     <AssemblyName>MacroInWZa007</AssemblyName>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Same icon for the tray and window, so they match the exe -->
+    <EmbeddedResource Include="Assets\app.ico" LogicalName="app.ico"/>
+  </ItemGroup>
 
 </Project>

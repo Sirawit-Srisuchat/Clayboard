@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Windows;
-using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using MacroInWZa007.Config;
 using MacroInWZa007.Core;
@@ -57,8 +56,7 @@ public partial class App : Application
 
         _window = new MainWindow(viewModel)
         {
-            Icon = Imaging.CreateBitmapSourceFromHIcon(tray.IconHandle, Int32Rect.Empty,
-                BitmapSizeOptions.FromEmptyOptions()),
+            Icon = BitmapFrame.Create(TrayIcon.OpenAppIcon(), BitmapCreateOptions.None, BitmapCacheOption.OnLoad),
         };
         _window.HiddenToTray += OnHiddenToTray;
         if (!e.Args.Contains("--tray"))
