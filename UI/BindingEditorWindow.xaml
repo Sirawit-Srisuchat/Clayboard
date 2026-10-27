@@ -5,7 +5,7 @@
         Title="Binding" Width="480" SizeToContent="Height"
         WindowStartupLocation="CenterOwner" WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False"
         Background="{StaticResource BgBrush}" Foreground="{StaticResource InkBrush}"
-        FontFamily="{StaticResource UiFont}" FontSize="13"
+        FontFamily="{DynamicResource UiFont}" FontSize="13"
         UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
 
     <WindowChrome.WindowChrome>
@@ -19,12 +19,12 @@
             <DockPanel DockPanel.Dock="Top" Background="Transparent" Margin="24,20,24,0"
                        MouseLeftButtonDown="OnDragHeader">
                 <Button DockPanel.Dock="Right" Style="{StaticResource ChromeButton}" Width="30" Height="30"
-                        VerticalAlignment="Top" Margin="0,-4,-10,0" Content="&#xE8BB;" ToolTip="Close"
+                        VerticalAlignment="Top" Margin="0,-4,-10,0" Content="&#xE8BB;" ToolTip="{DynamicResource Win.Close}"
                         Click="OnCancel"/>
                 <StackPanel>
-                    <TextBlock x:Name="HeaderText" Text="New binding" FontSize="18" FontWeight="Medium"/>
+                    <TextBlock x:Name="HeaderText" Text="{DynamicResource Ed.New}" FontSize="18" FontWeight="Medium"/>
                     <TextBlock Style="{StaticResource Muted}" Margin="0,2,0,0"
-                               Text="Click the box, then press the keys you want to use"/>
+                               Text="{DynamicResource Ed.Subtitle}" TextWrapping="Wrap"/>
                 </StackPanel>
             </DockPanel>
 
@@ -33,19 +33,19 @@
                 <TextBlock x:Name="ErrorText" Foreground="{StaticResource TerraBrush}" TextWrapping="Wrap"
                            Margin="0,14,0,0" Visibility="Collapsed"/>
                 <DockPanel Margin="0,18,0,0">
-                    <Button x:Name="DeleteButton" Style="{StaticResource LinkButton}" Content="Delete" FontSize="13"
+                    <Button x:Name="DeleteButton" Style="{StaticResource LinkButton}" Content="{DynamicResource Ed.Delete}" FontSize="13"
                             Foreground="{StaticResource TerraBrush}" VerticalAlignment="Center" Click="OnDelete"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button x:Name="TestButton" Style="{StaticResource GhostButton}" Margin="0,0,8,0"
-                                Click="OnTest" ToolTip="Run the action now">
+                                Click="OnTest" ToolTip="{DynamicResource Ed.TestTooltip}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Style="{StaticResource Icon}" Text="&#xE768;" FontSize="11"/>
-                                <TextBlock x:Name="TestLabel" Text="Test" Margin="6,0,0,0"/>
+                                <TextBlock x:Name="TestLabel" Text="{DynamicResource Ed.Test}" Margin="6,0,0,0"/>
                             </StackPanel>
                         </Button>
-                        <Button Style="{StaticResource GhostButton}" Content="Cancel" Margin="0,0,8,0"
+                        <Button Style="{StaticResource GhostButton}" Content="{DynamicResource Ed.Cancel}" Margin="0,0,8,0"
                                 IsCancel="True" Click="OnCancel"/>
-                        <Button Style="{StaticResource PrimaryButton}" Content="Save" Click="OnSave"/>
+                        <Button Style="{StaticResource PrimaryButton}" Content="{DynamicResource Ed.Save}" Click="OnSave"/>
                     </StackPanel>
                 </DockPanel>
             </StackPanel>
@@ -55,16 +55,16 @@
                     <Style TargetType="ScrollBar" BasedOn="{StaticResource ThinVerticalScrollBar}"/>
                 </ScrollViewer.Resources>
                 <StackPanel Margin="24,0,24,0">
-                    <local:KeyRecorder x:Name="TriggerRecorder" Margin="0,16,0,0" IdleHint="Click to record keys"/>
+                    <local:KeyRecorder x:Name="TriggerRecorder" Margin="0,16,0,0" IdleHintKey="Rec.Idle"/>
 
                     <WrapPanel x:Name="ModeChips" Margin="0,10,0,0">
-                        <RadioButton Style="{StaticResource Chip}" GroupName="Mode" Tag="press" Content="Press"
+                        <RadioButton Style="{StaticResource Chip}" GroupName="Mode" Tag="press" Content="{DynamicResource Mode.Press}"
                                      IsChecked="True" Checked="OnModeChecked"/>
-                        <RadioButton Style="{StaticResource Chip}" GroupName="Mode" Tag="doubleTap" Content="Double-tap"
+                        <RadioButton Style="{StaticResource Chip}" GroupName="Mode" Tag="doubleTap" Content="{DynamicResource Mode.DoubleTap}"
                                      Checked="OnModeChecked"/>
-                        <RadioButton Style="{StaticResource Chip}" GroupName="Mode" Tag="hold" Content="Hold"
+                        <RadioButton Style="{StaticResource Chip}" GroupName="Mode" Tag="hold" Content="{DynamicResource Mode.Hold}"
                                      Checked="OnModeChecked"/>
-                        <RadioButton Style="{StaticResource Chip}" GroupName="Mode" Tag="sequence" Content="Sequence"
+                        <RadioButton Style="{StaticResource Chip}" GroupName="Mode" Tag="sequence" Content="{DynamicResource Mode.Sequence}"
                                      Checked="OnModeChecked"/>
                     </WrapPanel>
 
@@ -73,23 +73,23 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <DockPanel Margin="0,0,0,6">
-                                        <TextBlock DockPanel.Dock="Left" Style="{StaticResource Muted}" Text="then"
+                                        <TextBlock DockPanel.Dock="Left" Style="{StaticResource Muted}" Text="{DynamicResource Ed.Then}"
                                                    Width="36" VerticalAlignment="Center"/>
                                         <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}"
-                                                Content="&#xE711;" ToolTip="Remove" Margin="6,0,0,0"
+                                                Content="&#xE711;" ToolTip="{DynamicResource Ed.Remove}" Margin="6,0,0,0"
                                                 Click="OnRemoveSequenceStep"/>
                                         <local:KeyRecorder Compact="True" Keys="{Binding Keys}"
-                                                           IdleHint="Click to record the next keys"/>
+                                                           IdleHintKey="Rec.IdleNext"/>
                                     </DockPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <Button Style="{StaticResource LinkButton}" Content="+ Add next keys" HorizontalAlignment="Left"
+                        <Button Style="{StaticResource LinkButton}" Content="{DynamicResource Ed.AddNextKeys}" HorizontalAlignment="Left"
                                 Click="OnAddSequenceStep"/>
                     </StackPanel>
 
                     <StackPanel x:Name="HoldPanel" Visibility="Collapsed">
-                        <TextBlock Style="{StaticResource FieldLabel}" Text="Hold for (ms)" Margin="0,6,0,6"/>
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.HoldFor}" Margin="0,6,0,6"/>
                         <TextBox x:Name="HoldBox" Style="{StaticResource Field}" Tag="500" Width="120"
                                  HorizontalAlignment="Left"/>
                     </StackPanel>
@@ -97,55 +97,55 @@
                     <TextBlock x:Name="ModeHint" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"
                                Visibility="Collapsed"/>
 
-                    <TextBlock Style="{StaticResource FieldLabel}" Text="Name"/>
-                    <TextBox x:Name="NameBox" Style="{StaticResource Field}" Tag="Open terminal"/>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.Name}"/>
+                    <TextBox x:Name="NameBox" Style="{StaticResource Field}" Tag="{DynamicResource Ed.NamePlaceholder}"/>
 
-                    <TextBlock Style="{StaticResource FieldLabel}" Text="Only in app (optional)"/>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.OnlyInApp}"/>
                     <DockPanel>
-                        <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="Choose"
+                        <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="{DynamicResource Ed.Choose}"
                                 Padding="12,7" Margin="8,0,0,0" Click="OnChooseApp"/>
-                        <TextBox x:Name="AppBox" Style="{StaticResource Field}" Tag="Every app"/>
+                        <TextBox x:Name="AppBox" Style="{StaticResource Field}" Tag="{DynamicResource Ed.EveryApp}"/>
                     </DockPanel>
 
-                    <TextBlock Style="{StaticResource FieldLabel}" Text="Action"/>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.Action}"/>
                     <WrapPanel x:Name="ActionChips">
-                        <RadioButton Style="{StaticResource Chip}" GroupName="ActionType" Tag="run" Content="Run"
+                        <RadioButton Style="{StaticResource Chip}" GroupName="ActionType" Tag="run" Content="{DynamicResource Act.Run}"
                                      IsChecked="True" Checked="OnActionTypeChecked"/>
-                        <RadioButton Style="{StaticResource Chip}" GroupName="ActionType" Tag="text" Content="Text"
+                        <RadioButton Style="{StaticResource Chip}" GroupName="ActionType" Tag="text" Content="{DynamicResource Act.Text}"
                                      Checked="OnActionTypeChecked"/>
-                        <RadioButton Style="{StaticResource Chip}" GroupName="ActionType" Tag="sendKeys" Content="Keys"
+                        <RadioButton Style="{StaticResource Chip}" GroupName="ActionType" Tag="sendKeys" Content="{DynamicResource Act.Keys}"
                                      Checked="OnActionTypeChecked"/>
-                        <RadioButton Style="{StaticResource Chip}" GroupName="ActionType" Tag="macro" Content="Macro"
+                        <RadioButton Style="{StaticResource Chip}" GroupName="ActionType" Tag="macro" Content="{DynamicResource Act.Macro}"
                                      Checked="OnActionTypeChecked"/>
-                        <RadioButton Style="{StaticResource Chip}" GroupName="ActionType" Tag="media" Content="Media"
+                        <RadioButton Style="{StaticResource Chip}" GroupName="ActionType" Tag="media" Content="{DynamicResource Act.Media}"
                                      Checked="OnActionTypeChecked"/>
                     </WrapPanel>
 
                     <StackPanel x:Name="RunPanel">
-                        <TextBlock Style="{StaticResource FieldLabel}" Text="Program, file, folder, or URL"/>
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.Path}"/>
                         <DockPanel>
-                            <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="Browse"
+                            <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="{DynamicResource Ed.Browse}"
                                     Padding="12,7" Margin="8,0,0,0" Click="OnBrowse"/>
                             <TextBox x:Name="PathBox" Style="{StaticResource Field}" Tag="notepad.exe"/>
                         </DockPanel>
-                        <TextBlock Style="{StaticResource FieldLabel}" Text="Arguments (optional)"/>
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.Args}"/>
                         <TextBox x:Name="ArgsBox" Style="{StaticResource Field}" Tag="--new-window"/>
                     </StackPanel>
 
                     <StackPanel x:Name="TextPanel" Visibility="Collapsed">
-                        <TextBlock Style="{StaticResource FieldLabel}" Text="Text to type"/>
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.TextToType}"/>
                         <TextBox x:Name="ValueBox" Style="{StaticResource Field}" Tag="you@example.com"
                                  AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" MaxHeight="160"
                                  VerticalScrollBarVisibility="Auto"/>
                     </StackPanel>
 
                     <StackPanel x:Name="KeysPanel" Visibility="Collapsed">
-                        <TextBlock Style="{StaticResource FieldLabel}" Text="Keys to send"/>
-                        <local:KeyRecorder x:Name="KeysRecorder" IdleHint="Click to record the keys to send"/>
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.KeysToSend}"/>
+                        <local:KeyRecorder x:Name="KeysRecorder" IdleHintKey="Rec.IdleSend"/>
                     </StackPanel>
 
                     <StackPanel x:Name="MacroPanel" Visibility="Collapsed">
-                        <TextBlock Style="{StaticResource FieldLabel}" Text="Steps"/>
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.Steps}"/>
                         <ItemsControl x:Name="StepList">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -161,8 +161,8 @@
                                         <TextBlock Grid.Column="1" Text="{Binding Label}" VerticalAlignment="Center"/>
                                         <Grid Grid.Column="2">
                                             <local:KeyRecorder x:Name="StepKeys" Compact="True" Keys="{Binding Keys}"
-                                                               IdleHint="Click to record" Visibility="Collapsed"/>
-                                            <TextBox x:Name="StepText" Style="{StaticResource Field}" Tag="Text to type"
+                                                               IdleHintKey="Rec.IdleShort" Visibility="Collapsed"/>
+                                            <TextBox x:Name="StepText" Style="{StaticResource Field}" Tag="{DynamicResource Ed.TextToType}"
                                                      Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
                                                      AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="100"
                                                      Visibility="Collapsed"/>
@@ -181,11 +181,11 @@
                                         <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="6,0,0,0"
                                                     VerticalAlignment="Center">
                                             <Button Style="{StaticResource IconButton}" Content="&#xE70E;"
-                                                    ToolTip="Move up" Click="OnMoveStepUp"/>
+                                                    ToolTip="{DynamicResource Ed.MoveUp}" Click="OnMoveStepUp"/>
                                             <Button Style="{StaticResource IconButton}" Content="&#xE70D;"
-                                                    ToolTip="Move down" Click="OnMoveStepDown"/>
+                                                    ToolTip="{DynamicResource Ed.MoveDown}" Click="OnMoveStepDown"/>
                                             <Button Style="{StaticResource IconButton}" Content="&#xE711;"
-                                                    ToolTip="Remove" Click="OnRemoveStep"/>
+                                                    ToolTip="{DynamicResource Ed.Remove}" Click="OnRemoveStep"/>
                                         </StackPanel>
                                     </Grid>
                                     <DataTemplate.Triggers>
@@ -208,31 +208,31 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <Button x:Name="AddStepButton" Style="{StaticResource LinkButton}" Content="+ Add step"
+                        <Button x:Name="AddStepButton" Style="{StaticResource LinkButton}" Content="{DynamicResource Ed.AddStep}"
                                 HorizontalAlignment="Left" Click="OnAddStep">
                             <Button.ContextMenu>
                                 <ContextMenu>
-                                    <MenuItem Header="Keys" Tag="sendKeys" Click="OnAddStepOfType"/>
-                                    <MenuItem Header="Type text" Tag="text" Click="OnAddStepOfType"/>
-                                    <MenuItem Header="Wait" Tag="delay" Click="OnAddStepOfType"/>
-                                    <MenuItem Header="Run program" Tag="run" Click="OnAddStepOfType"/>
+                                    <MenuItem Header="{DynamicResource Menu.Keys}" Tag="sendKeys" Click="OnAddStepOfType"/>
+                                    <MenuItem Header="{DynamicResource Menu.TypeText}" Tag="text" Click="OnAddStepOfType"/>
+                                    <MenuItem Header="{DynamicResource Menu.Wait}" Tag="delay" Click="OnAddStepOfType"/>
+                                    <MenuItem Header="{DynamicResource Menu.Run}" Tag="run" Click="OnAddStepOfType"/>
                                 </ContextMenu>
                             </Button.ContextMenu>
                         </Button>
                     </StackPanel>
 
                     <StackPanel x:Name="MediaPanel" Visibility="Collapsed">
-                        <TextBlock Style="{StaticResource FieldLabel}" Text="Command"/>
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.Command}"/>
                         <WrapPanel x:Name="MediaChips">
                             <RadioButton Style="{StaticResource Chip}" GroupName="Media" Tag="playPause"
-                                         Content="Play / pause" IsChecked="True"/>
-                            <RadioButton Style="{StaticResource Chip}" GroupName="Media" Tag="next" Content="Next"/>
-                            <RadioButton Style="{StaticResource Chip}" GroupName="Media" Tag="previous" Content="Previous"/>
-                            <RadioButton Style="{StaticResource Chip}" GroupName="Media" Tag="stop" Content="Stop"/>
-                            <RadioButton Style="{StaticResource Chip}" GroupName="Media" Tag="volumeUp" Content="Volume up"/>
+                                         Content="{DynamicResource Media.playPause}" IsChecked="True"/>
+                            <RadioButton Style="{StaticResource Chip}" GroupName="Media" Tag="next" Content="{DynamicResource Media.next}"/>
+                            <RadioButton Style="{StaticResource Chip}" GroupName="Media" Tag="previous" Content="{DynamicResource Media.previous}"/>
+                            <RadioButton Style="{StaticResource Chip}" GroupName="Media" Tag="stop" Content="{DynamicResource Media.stop}"/>
+                            <RadioButton Style="{StaticResource Chip}" GroupName="Media" Tag="volumeUp" Content="{DynamicResource Media.volumeUp}"/>
                             <RadioButton Style="{StaticResource Chip}" GroupName="Media" Tag="volumeDown"
-                                         Content="Volume down"/>
-                            <RadioButton Style="{StaticResource Chip}" GroupName="Media" Tag="mute" Content="Mute"/>
+                                         Content="{DynamicResource Media.volumeDown}"/>
+                            <RadioButton Style="{StaticResource Chip}" GroupName="Media" Tag="mute" Content="{DynamicResource Media.mute}"/>
                         </WrapPanel>
                     </StackPanel>
 
@@ -240,9 +240,9 @@
                         <ToggleButton x:Name="SuppressSwitch" DockPanel.Dock="Right" Style="{StaticResource Switch}"
                                       VerticalAlignment="Center" IsChecked="True"/>
                         <StackPanel>
-                            <TextBlock Text="Block the keys from other apps"/>
+                            <TextBlock Text="{DynamicResource Ed.Block}" TextWrapping="Wrap"/>
                             <TextBlock Style="{StaticResource Muted}"
-                                       Text="Turn off to let the app you're in see them too."/>
+                                       Text="{DynamicResource Ed.BlockHint}" TextWrapping="Wrap"/>
                         </StackPanel>
                     </DockPanel>
                 </StackPanel>

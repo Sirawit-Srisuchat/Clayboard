@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using MacroInWZa007.Config;
 using MacroInWZa007.Core;
+using MacroInWZa007.Localization;
 
 namespace MacroInWZa007.UI;
 
@@ -21,6 +22,25 @@ public partial class MainWindow : Window
         _viewModel = viewModel;
         DataContext = viewModel;
         StateChanged += (_, _) => UpdateMaximizedLayout();
+        Loc.Changed += UpdateMaximizedLayout;
+        BuildLanguageChips();
+    }
+
+    private void BuildLanguageChips()
+    {
+        foreach (var (code, nativeName) in Loc.Languages)
+        {
+            var chip = new RadioButton
+            {
+                Style = (Style)FindResource("Chip"),
+                GroupName = "Language",
+                Content = nativeName, // Each language in its own script, so anyone can find theirs.
+                Tag = code,
+                IsChecked = code == _viewModel.Language,
+            };
+            chip.Checked += (_, _) => _viewModel.SetLanguage(code);
+            LanguageChips.Children.Add(chip);
+        }
     }
 
     /// <summary>Raised when the close button hides the window instead of exiting.</summary>
@@ -53,7 +73,7 @@ public partial class MainWindow : Window
         Root.Margin = maximized ? new Thickness(7) : new Thickness(0);
         Root.BorderThickness = maximized ? new Thickness(0) : new Thickness(1);
         MaximizeButton.Content = maximized ? "" : "";
-        MaximizeButton.ToolTip = maximized ? "Restore" : "Maximize";
+        MaximizeButton.ToolTip = Loc.T(maximized ? "Win.Restore" : "Win.Maximize");
     }
 
     private void OnMinimize(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -96,7 +116,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
         {
-            SettingsError.Text = $"Couldn't change the startup setting. {ex.Message}";
+            SettingsError.Text = Loc.F("Settings.StartupError", ex.Message);
             SettingsError.Visibility = Visibility.Visible;
         }
         SyncStartupSwitch();
@@ -146,6 +166,8 @@ public partial class MainWindow : Window
                 break;
             default:
                 SyncStartupSwitch();
+                foreach (RadioButton chip in LanguageChips.Children)
+                    chip.IsChecked = (string)chip.Tag == Loc.Language;
                 ShowPage(SettingsPage);
                 break;
         }

@@ -1,7 +1,7 @@
 <UserControl x:Class="MacroInWZa007.UI.KeyRecorder"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Cursor="Hand" MouseLeftButtonUp="OnClick" ToolTip="Click, then press the keys">
+    <Grid Cursor="Hand" MouseLeftButtonUp="OnClick" ToolTip="{DynamicResource Rec.Tooltip}">
         <Border x:Name="Box" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}"
                 BorderThickness="1" CornerRadius="10" Padding="16,14" MinHeight="96">
             <StackPanel x:Name="Panel" HorizontalAlignment="Center" VerticalAlignment="Center">

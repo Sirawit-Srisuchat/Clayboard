@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using MacroInWZa007.Actions;
 using MacroInWZa007.Core;
+using MacroInWZa007.Localization;
 
 namespace MacroInWZa007.UI;
 
@@ -47,14 +48,14 @@ public sealed class MacroStep : Observable
     /// <summary>sendKeys, text, delay, run, or media (media steps only come from config.json).</summary>
     public string Type { get; }
 
-    public string Label => Type switch
+    public string Label => Loc.T(Type switch
     {
-        "sendKeys" => "Keys",
-        "text" => "Type",
-        "delay" => "Wait",
-        "run" => "Run",
-        _ => "Media",
-    };
+        "sendKeys" => "Step.Keys",
+        "text" => "Step.Type",
+        "delay" => "Step.Wait",
+        "run" => "Step.Run",
+        _ => "Step.Media",
+    });
 
     public int Number
     {

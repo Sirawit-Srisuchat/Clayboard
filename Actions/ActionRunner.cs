@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Threading;
 using MacroInWZa007.Core;
 using MacroInWZa007.Input;
+using MacroInWZa007.Localization;
 
 namespace MacroInWZa007.Actions;
 
@@ -12,15 +13,15 @@ public static class ActionRunner
 {
     public const int MaxDelayMs = 60000;
 
-    private static readonly Dictionary<string, (int Vk, string Label)> MediaCommands = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, (int Vk, string Name)> MediaCommands = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["playPause"] = (0xB3, "Play / pause"),
-        ["next"] = (0xB0, "Next track"),
-        ["previous"] = (0xB1, "Previous track"),
-        ["stop"] = (0xB2, "Stop"),
-        ["volumeUp"] = (0xAF, "Volume up"),
-        ["volumeDown"] = (0xAE, "Volume down"),
-        ["mute"] = (0xAD, "Mute"),
+        ["playPause"] = (0xB3, "playPause"),
+        ["next"] = (0xB0, "next"),
+        ["previous"] = (0xB1, "previous"),
+        ["stop"] = (0xB2, "stop"),
+        ["volumeUp"] = (0xAF, "volumeUp"),
+        ["volumeDown"] = (0xAE, "volumeDown"),
+        ["mute"] = (0xAD, "mute"),
     };
 
     /// <summary>Returns a message describing what is wrong, or null if the action can run.</summary>
@@ -28,47 +29,48 @@ public static class ActionRunner
 
     private static string? Validate(ActionSpec action, bool isStep) => Normalize(action.Type) switch
     {
-        "run" when string.IsNullOrWhiteSpace(action.Path) => "Run needs a \"path\".",
+        "run" when string.IsNullOrWhiteSpace(action.Path) => Loc.T("Err.RunPath"),
         "run" => null,
-        "text" when string.IsNullOrEmpty(action.Value) => "Text needs a \"value\".",
+        "text" when string.IsNullOrEmpty(action.Value) => Loc.T("Err.TextValue"),
         "text" => null,
         "sendkeys" => KeyCombo.TryParse(action.Keys, out _, out var error) ? null : error,
         "media" when !MediaCommands.ContainsKey(action.Command ?? "") =>
-            $"Unknown media command \"{action.Command}\". Use {string.Join(", ", MediaCommands.Keys)}.",
+            Loc.F("Err.Media", action.Command, string.Join(", ", MediaCommands.Keys)),
         "media" => null,
-        "macro" when isStep => "A macro can't contain another macro.",
+        "macro" when isStep => Loc.T("Err.NestedMacro"),
         "macro" => ValidateSteps(action.Steps),
-        "delay" when !isStep => "Wait only works as a macro step.",
-        "delay" when action.Ms is not (>= 0 and <= MaxDelayMs) => $"Wait needs \"ms\" between 0 and {MaxDelayMs}.",
+        "delay" when !isStep => Loc.T("Err.DelayOutside"),
+        "delay" when action.Ms is not (>= 0 and <= MaxDelayMs) => Loc.F("Err.DelayMs", MaxDelayMs),
         "delay" => null,
-        _ => $"Unknown action type \"{action.Type}\".",
+        _ => Loc.F("Err.ActionType", action.Type),
     };
 
     private static string? ValidateSteps(List<ActionSpec>? steps)
     {
         if (steps is null || steps.Count == 0)
-            return "Add at least one step to the macro.";
+            return Loc.T("Err.NoSteps");
         for (int i = 0; i < steps.Count; i++)
             if (Validate(steps[i] ?? new ActionSpec { Type = "" }, isStep: true) is { } error)
-                return $"Step {i + 1}: {error}";
+                return Loc.F("Err.Step", i + 1, error);
         return null;
     }
 
     /// <summary>Short subtitle for the bindings list, such as "Run · wt.exe".</summary>
     public static string Describe(ActionSpec action) => Normalize(action.Type) switch
     {
-        "run" => $"Run · {action.Path}",
-        "text" => "Text",
-        "sendkeys" => $"Keys · {action.Keys}",
-        "media" => MediaCommands.TryGetValue(action.Command ?? "", out var m) ? $"Media · {m.Label}" : "Media",
-        "macro" => action.Steps?.Count == 1 ? "Macro · 1 step" : $"Macro · {action.Steps?.Count ?? 0} steps",
-        "delay" => $"Wait {action.Ms} ms",
+        "run" => Loc.F("Desc.Run", action.Path),
+        "text" => Loc.T("Desc.Text"),
+        "sendkeys" => Loc.F("Desc.Keys", action.Keys),
+        "media" => MediaCommands.ContainsKey(action.Command ?? "")
+            ? Loc.F("Desc.Media", MediaLabel(action.Command))
+            : Loc.T("Desc.MediaPlain"),
+        "macro" => action.Steps?.Count == 1 ? Loc.T("Desc.Macro1") : Loc.F("Desc.MacroN", action.Steps?.Count ?? 0),
+        "delay" => Loc.F("Desc.Wait", action.Ms),
         _ => action.Type,
     };
 
     public static string MediaLabel(string? command) =>
-        MediaCommands.TryGetValue(command ?? "", out var m) ? m.Label : command ?? "";
-
+        MediaCommands.TryGetValue(command ?? "", out var m) ? Loc.T("Media." + m.Name) : command ?? "";
     /// <summary>True for actions that type into whichever window has focus.</summary>
     public static bool TypesIntoFocusedWindow(ActionSpec action) =>
         Normalize(action.Type) is "text" or "sendkeys" or "macro";

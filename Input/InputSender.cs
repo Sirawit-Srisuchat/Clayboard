@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using MacroInWZa007.Core;
+using MacroInWZa007.Localization;
 using static MacroInWZa007.Input.NativeMethods;
 
 namespace MacroInWZa007.Input;
@@ -135,7 +136,6 @@ public static class InputSender
         var array = inputs.ToArray();
         uint sent = SendInput((uint)array.Length, array, Marshal.SizeOf<INPUT>());
         if (sent != array.Length)
-            throw new InvalidOperationException(
-                "Windows blocked the keystrokes. If the target app runs as admin, run Macro as admin too.");
+            throw new InvalidOperationException(Loc.T("Err.Blocked"));
     }
 }

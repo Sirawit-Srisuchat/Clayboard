@@ -253,7 +253,7 @@
     </Style>
 
     <Style TargetType="ContextMenu">
-        <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource UiFont}"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
         <Setter Property="HasDropShadow" Value="False"/>

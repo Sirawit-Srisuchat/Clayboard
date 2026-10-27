@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Media.Imaging;
 using MacroInWZa007.Config;
 using MacroInWZa007.Core;
+using MacroInWZa007.Localization;
 using MacroInWZa007.UI;
 
 namespace MacroInWZa007;
@@ -22,11 +23,12 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        Loc.Apply(null); // Windows display language until config.json says otherwise.
 
         _instanceMutex = new Mutex(true, "MacroInWZa007.SingleInstance", out _ownsMutex);
         if (!_ownsMutex)
         {
-            MessageBox.Show("Macro is already running. Look for it in the system tray.", "Macro");
+            MessageBox.Show(Loc.T("App.AlreadyRunning"), "Macro");
             Shutdown();
             return;
         }
@@ -42,7 +44,7 @@ public partial class App : Application
         _tray = tray;
         viewModel.PausedChanged += tray.SetPaused;
         _engine.ActionFailed += (binding, ex) =>
-            Dispatcher.InvokeAsync(() => tray.ShowError($"\"{binding.Name}\" didn't run", ex.Message));
+            Dispatcher.InvokeAsync(() => tray.ShowError(Loc.F("App.ActionFailed", binding.Name), ex.Message));
         _store.Changed += () => Dispatcher.InvokeAsync(viewModel.Reload);
 
         try
@@ -51,7 +53,7 @@ public partial class App : Application
         }
         catch (Win32Exception ex)
         {
-            MessageBox.Show($"Couldn't start listening to the keyboard. {ex.Message}", "Macro");
+            MessageBox.Show(Loc.F("App.HookFailed", ex.Message), "Macro");
         }
 
         _window = new MainWindow(viewModel)
@@ -89,7 +91,7 @@ public partial class App : Application
         if (_trayHintShown)
             return;
         _trayHintShown = true;
-        _tray?.ShowInfo("Macro is still running", "Your hotkeys keep working. Open Macro from the tray icon.");
+        _tray?.ShowInfo(Loc.T("App.StillRunningTitle"), Loc.T("App.StillRunningText"));
     }
 
     private void ExitApp()

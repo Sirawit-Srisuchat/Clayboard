@@ -10,6 +10,7 @@ using System.Windows.Data;
 using MacroInWZa007.Config;
 using MacroInWZa007.Core;
 using MacroInWZa007.Input;
+using MacroInWZa007.Localization;
 
 namespace MacroInWZa007.UI;
 
@@ -24,8 +25,8 @@ public enum ListScope
 /// <summary>A group of bindings that share an app ("Global" when they work everywhere).</summary>
 public sealed record ProfileSummary(string? AppKey, string Name, int Count)
 {
-    public string CountText => Count == 1 ? "1 binding" : $"{Count} bindings";
-    public string Hint => AppKey is null ? "Works in every app" : "Only while this app is in front";
+    public string CountText => Count == 1 ? Loc.T("Profiles.Count1") : Loc.F("Profiles.CountN", Count);
+    public string Hint => Loc.T(AppKey is null ? "Profiles.GlobalHint" : "Profiles.AppHint");
 }
 
 public sealed class MainViewModel : INotifyPropertyChanged
@@ -45,6 +46,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _engine = engine;
         View = CollectionViewSource.GetDefaultView(Items);
         View.Filter = Matches;
+        Loc.Changed += OnLanguageChanged;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -55,6 +57,18 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICollectionView View { get; }
     public HotkeyEngine Engine => _engine;
     public string ConfigPath => _store.FilePath;
+    public string Language => Loc.Language;
+
+    /// <summary>Switches the UI language and remembers it in config.json.</summary>
+    public void SetLanguage(string code)
+    {
+        if (code == Loc.Language)
+            return;
+        _config.Language = code;
+        Loc.Apply(code);
+        if (!TrySave(out var error))
+            LoadError = error;
+    }
 
     public string SearchText
     {
@@ -83,17 +97,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    public string StatusText => Paused ? "Paused" : "Listening";
-    public string PauseLabel => Paused ? "Resume" : "Pause";
+    public string StatusText => Loc.T(Paused ? "Status.Paused" : "Status.Listening");
+    public string PauseLabel => Loc.T(Paused ? "Status.Resume" : "Status.Pause");
 
     public ListScope Scope => _scope;
     public bool IsProfileScope => _scope == ListScope.Profile;
 
     public string PageTitle => _scope switch
     {
-        ListScope.Macros => "Macros",
+        ListScope.Macros => Loc.T("Nav.Macros"),
         ListScope.Profile => _profileName,
-        _ => "Bindings",
+        _ => Loc.T("Nav.Bindings"),
     };
 
     public string Summary
@@ -104,10 +118,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
             int active = inScope.Count(i => i.Enabled && !i.HasError);
             return _scope switch
             {
-                ListScope.Macros => $"{inScope.Count} {(inScope.Count == 1 ? "macro" : "macros")} · {active} active",
-                ListScope.Profile when _profileKey is null => $"{active} active · every app",
-                ListScope.Profile => $"{active} active · only in {_profileName}",
-                _ => $"{active} active · {Profiles.Count} profiles",
+                ListScope.Macros => Loc.F(inScope.Count == 1 ? "List.Summary.Macro1" : "List.Summary.MacroN", inScope.Count, active),
+                ListScope.Profile when _profileKey is null => Loc.F("List.Summary.Global", active),
+                ListScope.Profile => Loc.F("List.Summary.App", active, _profileName),
+                _ => Loc.F("List.Summary.All", active, Profiles.Count),
             };
         }
     }
@@ -119,14 +133,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
         get
         {
             if (Items.Count == 0)
-                return "Click New to add your first binding.";
+                return Loc.T("List.Empty.First");
             if (!string.IsNullOrWhiteSpace(_searchText))
-                return "No bindings match your search.";
-            return _scope switch
-            {
-                ListScope.Macros => "Click New to build your first macro.",
-                _ => "No bindings in this profile yet.",
-            };
+                return Loc.T("List.Empty.Search");
+            return Loc.T(_scope == ListScope.Macros ? "List.Empty.Macros" : "List.Empty.Profile");
         }
     }
 
@@ -153,11 +163,23 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
         {
-            LoadError = $"Couldn't read config.json, so the previous bindings are still in use. {ex.Message}";
+            LoadError = Loc.F("List.LoadError", ex.Message);
             return;
         }
 
+        // Switching language rebuilds the list itself (subtitles and keycaps are translated).
+        if (Loc.Resolve(_config.Language) != Loc.Language)
+            Loc.Apply(_config.Language);
+        else
+            RebuildItems();
+    }
+
+    private void OnLanguageChanged()
+    {
+        if (_scope == ListScope.Profile && _profileKey is null)
+            _profileName = Loc.T("Profiles.Global");
         RebuildItems();
+        OnPropertyChanged(string.Empty); // Every text property may have changed.
     }
 
     public void ShowAll() => SetScope(ListScope.All, null, "");
@@ -224,7 +246,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private void RebuildProfiles()
     {
         Profiles.Clear();
-        Profiles.Add(new ProfileSummary(null, "Global", Items.Count(i => i.AppKey is null)));
+        Profiles.Add(new ProfileSummary(null, Loc.T("Profiles.Global"), Items.Count(i => i.AppKey is null)));
         foreach (var group in Items.Where(i => i.AppKey is not null).GroupBy(i => i.AppKey).OrderBy(g => g.Key))
             Profiles.Add(new ProfileSummary(group.Key, group.First().Model.App!.Trim(), group.Count()));
     }
@@ -246,7 +268,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            error = $"Couldn't save config.json. {ex.Message}";
+            error = Loc.F("List.SaveError", ex.Message);
             return false;
         }
     }
@@ -262,7 +284,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 continue;
             var key = (item.Trigger!.Id, item.AppKey);
             if (active.TryGetValue(key, out var first))
-                item.Conflict = $"Same keys as \"{first.Name}\", so this one is ignored.";
+                item.Conflict = Loc.F("List.Conflict", first.Name);
             else
                 active[key] = item;
         }

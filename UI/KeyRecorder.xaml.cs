@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using MacroInWZa007.Core;
+using MacroInWZa007.Localization;
 
 namespace MacroInWZa007.UI;
 
@@ -36,7 +37,18 @@ public partial class KeyRecorder : UserControl
             ApplyLayout();
             ShowKeys();
         };
-        Unloaded += (_, _) => Cancel();
+        Unloaded += (_, _) =>
+        {
+            Cancel();
+            Loc.Changed -= OnLanguageChanged;
+        };
+        Loaded += (_, _) => Loc.Changed += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged()
+    {
+        if (!_recording)
+            ShowKeys();
     }
 
     public event Action? KeysChanged;
@@ -44,8 +56,8 @@ public partial class KeyRecorder : UserControl
     /// <summary>The engine whose hook does the recording; set once at startup.</summary>
     public static HotkeyEngine? Engine { get; set; }
 
-    /// <summary>Shown when no keys are set yet.</summary>
-    public string IdleHint { get; set; } = "Click to record keys";
+    /// <summary>Text key (see <see cref="Loc"/>) shown when no keys are set yet.</summary>
+    public string IdleHintKey { get; set; } = "Rec.Idle";
 
     /// <summary>Single-line version for use inside lists.</summary>
     public bool Compact { get; set; }
@@ -101,7 +113,7 @@ public partial class KeyRecorder : UserControl
         _active = this;
         _recording = true;
         Caps.ItemsSource = null;
-        SetStatus(Compact ? "Press keys…" : "Recording… press your keys", recording: true);
+        SetStatus(Loc.T(Compact ? "Rec.RecordingShort" : "Rec.Recording"), recording: true);
         Engine.BeginCapture(OnCapture);
         _idleTimer.Start();
     }
@@ -129,7 +141,7 @@ public partial class KeyRecorder : UserControl
         if (vk == 0)
         {
             Caps.ItemsSource = KeyCombo.ToCaps(KeyCombo.Format(mods, null));
-            SetStatus(mods == Mods.None ? "Recording… press your keys" : "Add a key, or release", recording: true);
+            SetStatus(Loc.T(mods == Mods.None ? "Rec.Recording" : "Rec.AddKey"), recording: true);
             return;
         }
 
@@ -140,7 +152,7 @@ public partial class KeyRecorder : UserControl
             {
                 StopRecording();
                 ShowKeys();
-                SetStatus("That key isn't supported. Click to try another.", recording: false);
+                SetStatus(Loc.T("Rec.Unsupported"), recording: false);
             }
             return;
         }
@@ -149,7 +161,7 @@ public partial class KeyRecorder : UserControl
         Caps.ItemsSource = KeyCombo.ToCaps(combo);
         if (!done)
         {
-            SetStatus(Compact ? "" : "Release to finish", recording: true);
+            SetStatus(Compact ? "" : Loc.T("Rec.Release"), recording: true);
             return;
         }
 
@@ -162,8 +174,8 @@ public partial class KeyRecorder : UserControl
     private void ShowKeys()
     {
         Caps.ItemsSource = KeyCombo.ToCaps(Keys);
-        string hint = Compact ? "" : "Click to change";
-        SetStatus(Keys.Length == 0 ? IdleHint : hint, recording: false);
+        string hint = Compact ? "" : Loc.T("Rec.Change");
+        SetStatus(Keys.Length == 0 ? Loc.T(IdleHintKey) : hint, recording: false);
     }
 
     private void SetStatus(string text, bool recording)

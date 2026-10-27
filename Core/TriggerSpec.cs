@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MacroInWZa007.Localization;
 
 namespace MacroInWZa007.Core;
 
@@ -47,19 +48,19 @@ public sealed class TriggerSpec
         spec = null;
         if (!TryParseMode(mode, out var parsedMode))
         {
-            error = $"Unknown mode \"{mode}\". Use press, doubleTap, or hold.";
+            error = Loc.F("Err.Mode", mode);
             return false;
         }
 
         var parts = SplitSteps(trigger);
         if (parts.Length == 0)
         {
-            error = "No keys set.";
+            error = Loc.T("Err.NoKeysSet");
             return false;
         }
         if (parts.Length > 1 && parsedMode != TriggerMode.Press)
         {
-            error = "A sequence can't also be double-tap or hold.";
+            error = Loc.T("Err.SequenceMode");
             return false;
         }
 
@@ -74,7 +75,7 @@ public sealed class TriggerSpec
 
         if (holdMs is < 100 or > 10000)
         {
-            error = "Hold time must be between 100 and 10000 ms.";
+            error = Loc.T("Err.HoldMs");
             return false;
         }
 
@@ -111,7 +112,7 @@ public sealed class TriggerSpec
         foreach (var part in SplitSteps(trigger))
         {
             if (tokens.Count > 0)
-                tokens.Add(new CapToken("then", IsKey: false));
+                tokens.Add(new CapToken(Loc.T("Cap.Then"), IsKey: false));
             tokens.AddRange(KeyCombo.ToCaps(part).Select(cap => new CapToken(cap, IsKey: true)));
         }
 
@@ -119,7 +120,7 @@ public sealed class TriggerSpec
         if (parsedMode == TriggerMode.DoubleTap)
             tokens.Add(new CapToken("×2", IsKey: false));
         else if (parsedMode == TriggerMode.Hold)
-            tokens.Add(new CapToken("hold", IsKey: false));
+            tokens.Add(new CapToken(Loc.T("Cap.Hold"), IsKey: false));
         return tokens;
     }
 

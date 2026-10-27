@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Input;
+using MacroInWZa007.Localization;
 
 namespace MacroInWZa007.Core;
 
@@ -66,7 +67,7 @@ public readonly record struct KeyCombo(Mods Mods, int Vk)
         error = null;
         if (string.IsNullOrWhiteSpace(text))
         {
-            error = "No keys set.";
+            error = Loc.T("Err.NoKeysSet");
             return false;
         }
 
@@ -83,12 +84,12 @@ public readonly record struct KeyCombo(Mods Mods, int Vk)
             }
             if (vk != 0)
             {
-                error = $"Only one main key is allowed in \"{text}\".";
+                error = Loc.F("Err.OneKey", text);
                 return false;
             }
             if (!TryGetVk(part, out vk))
             {
-                error = $"Unknown key \"{part}\".";
+                error = Loc.F("Err.UnknownKey", part);
                 return false;
             }
         }
@@ -100,7 +101,7 @@ public readonly record struct KeyCombo(Mods Mods, int Vk)
         }
         if (vk == 0)
         {
-            error = "Add a key besides Ctrl, Alt, Shift, or Win, or use double-tap or hold.";
+            error = Loc.T("Err.NeedKey");
             return false;
         }
         combo = new KeyCombo(mods, vk);

@@ -4,6 +4,9 @@ namespace MacroInWZa007.Core;
 
 public sealed class AppConfig
 {
+    /// <summary>UI language code (en, th, ja, ko, zh, ru); null follows the Windows display language.</summary>
+    public string? Language { get; set; }
+
     public List<HotkeyBinding> Bindings { get; set; } = new();
 }
 

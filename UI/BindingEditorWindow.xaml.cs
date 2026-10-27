@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using MacroInWZa007.Actions;
 using MacroInWZa007.Core;
+using MacroInWZa007.Localization;
 using Microsoft.Win32;
 
 namespace MacroInWZa007.UI;
@@ -42,7 +43,7 @@ public partial class BindingEditorWindow : Window
         KeysRecorder.KeysChanged += HideError;
         Deactivated += (_, _) => KeyRecorder.CancelActive();
 
-        HeaderText.Text = original is null ? "New binding" : "Edit binding";
+        HeaderText.SetResourceReference(TextBlock.TextProperty, original is null ? "Ed.New" : "Ed.Edit");
         DeleteButton.Visibility = original is null ? Visibility.Collapsed : Visibility.Visible;
         Load(original ?? draft ?? new HotkeyBinding());
     }
@@ -142,15 +143,15 @@ public partial class BindingEditorWindow : Window
     private string? Validate(HotkeyBinding binding)
     {
         if (TriggerRecorder.Keys.Length == 0)
-            return "Record the keys that start this binding.";
+            return Loc.T("Ed.Err.NoKeys");
         if (CheckedTag(ModeChips) == "sequence" && !_sequence.Any(s => s.Keys.Length > 0))
-            return "Add the keys to press next, or pick Press instead of Sequence.";
+            return Loc.T("Ed.Err.NoNext");
         if (!TriggerSpec.TryParse(binding, out var trigger, out var triggerError))
             return triggerError;
         if (ActionRunner.Validate(binding.Action) is { } actionError)
             return actionError;
         if (binding.Enabled && _viewModel.FindConflict(trigger!, binding.App, _original) is { } other)
-            return $"These keys are already used by \"{other}\".";
+            return Loc.F("Ed.Err.Conflict", other);
         return null;
     }
 
@@ -177,7 +178,7 @@ public partial class BindingEditorWindow : Window
         if (!_confirmDelete)
         {
             _confirmDelete = true;
-            DeleteButton.Content = "Click again to delete";
+            DeleteButton.SetResourceReference(ContentProperty, "Ed.DeleteConfirm");
             return;
         }
         if (!_viewModel.DeleteBinding(_original, out var error))
@@ -213,19 +214,19 @@ public partial class BindingEditorWindow : Window
     private void StartTestCountdown(ActionSpec action)
     {
         int remaining = TestDelaySeconds;
-        TestLabel.Text = $"Switch window… {remaining}";
+        TestLabel.Text = Loc.F("Ed.Countdown", remaining);
         _testCountdown = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _testCountdown.Tick += (_, _) =>
         {
             remaining--;
             if (remaining > 0)
             {
-                TestLabel.Text = $"Switch window… {remaining}";
+                TestLabel.Text = Loc.F("Ed.Countdown", remaining);
                 return;
             }
             _testCountdown.Stop();
             _testCountdown = null;
-            TestLabel.Text = "Test";
+            TestLabel.SetResourceReference(TextBlock.TextProperty, "Ed.Test");
             RunTest(action);
         };
         _testCountdown.Start();
@@ -241,7 +242,7 @@ public partial class BindingEditorWindow : Window
             }
             catch (Exception ex)
             {
-                Dispatcher.InvokeAsync(() => ShowError($"Test failed. {ex.Message}"));
+                Dispatcher.InvokeAsync(() => ShowError(Loc.F("Ed.TestFailed", ex.Message)));
             }
         });
     }
@@ -253,7 +254,7 @@ public partial class BindingEditorWindow : Window
             && CheckedTag(ModeChips) != "sequence"
             && _viewModel.FindConflict(trigger!, AppBox.Text, _original) is { } other)
         {
-            ShowError($"These keys are already used by \"{other}\".");
+            ShowError(Loc.F("Ed.Err.Conflict", other));
         }
     }
 
@@ -267,14 +268,20 @@ public partial class BindingEditorWindow : Window
         HoldPanel.Visibility = mode == "hold" ? Visibility.Visible : Visibility.Collapsed;
         if (mode == "sequence" && _sequence.Count == 0)
             _sequence.Add(new SequenceStep());
-        ModeHint.Text = mode switch
+        if (mode is "doubleTap" or "hold" or "sequence")
         {
-            "doubleTap" => "Press the keys twice quickly. Works with a lone Shift, Ctrl, or Alt too.",
-            "hold" => "Keep the keys down. A quick tap still reaches the app as usual.",
-            "sequence" => "Press each step within 1.5 seconds of the last, like Ctrl+K then Ctrl+B.",
-            _ => "",
-        };
-        ModeHint.Visibility = ModeHint.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+            ModeHint.SetResourceReference(TextBlock.TextProperty, mode switch
+            {
+                "doubleTap" => "Ed.Hint.DoubleTap",
+                "hold" => "Ed.Hint.Hold",
+                _ => "Ed.Hint.Sequence",
+            });
+            ModeHint.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            ModeHint.Visibility = Visibility.Collapsed;
+        }
         HideError();
     }
 
@@ -334,7 +341,7 @@ public partial class BindingEditorWindow : Window
     private void OnChooseApp(object sender, RoutedEventArgs e)
     {
         var menu = new ContextMenu { PlacementTarget = (UIElement)sender };
-        var everyApp = new MenuItem { Header = "Every app" };
+        var everyApp = new MenuItem { Header = Loc.T("Ed.EveryApp") };
         everyApp.Click += (_, _) => AppBox.Text = "";
         menu.Items.Add(everyApp);
         foreach (var name in RunningAppNames())
@@ -373,8 +380,8 @@ public partial class BindingEditorWindow : Window
     {
         var dialog = new OpenFileDialog
         {
-            Title = "Choose a program or file",
-            Filter = "Programs (*.exe;*.bat;*.cmd;*.lnk)|*.exe;*.bat;*.cmd;*.lnk|All files (*.*)|*.*",
+            Title = Loc.T("Ed.BrowseTitle"),
+            Filter = $"{Loc.T("Ed.Programs")} (*.exe;*.bat;*.cmd;*.lnk)|*.exe;*.bat;*.cmd;*.lnk|{Loc.T("Ed.AllFiles")} (*.*)|*.*",
         };
         if (dialog.ShowDialog(this) == true)
             PathBox.Text = dialog.FileName;
