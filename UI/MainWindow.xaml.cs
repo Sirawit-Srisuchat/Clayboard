@@ -5,11 +5,11 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using MacroInWZa007.Config;
-using MacroInWZa007.Core;
-using MacroInWZa007.Localization;
+using Clayboard.Config;
+using Clayboard.Core;
+using Clayboard.Localization;
 
-namespace MacroInWZa007.UI;
+namespace Clayboard.UI;
 
 public partial class MainWindow : Window
 {

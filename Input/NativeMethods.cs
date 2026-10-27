@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace MacroInWZa007.Input;
+namespace Clayboard.Input;
 
 internal static class NativeMethods
 {

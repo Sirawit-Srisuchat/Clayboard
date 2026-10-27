@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
-namespace MacroInWZa007.UI;
+namespace Clayboard.UI;
 
 /// <summary>
 /// Small, cheap animations: only opacity and render transforms, which WPF composes on the GPU

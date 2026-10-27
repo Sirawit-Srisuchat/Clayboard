@@ -1,22 +1,22 @@
 using System.Collections.Generic;
 
-namespace MacroInWZa007.Localization;
+namespace Clayboard.Localization;
 
 internal static partial class Strings
 {
     public static readonly Dictionary<string, string> Th = new()
     {
-        ["App.AlreadyRunning"] = "Macro เปิดอยู่แล้ว ดูได้ที่ไอคอนใน system tray",
+        ["App.AlreadyRunning"] = "Clayboard เปิดอยู่แล้ว ดูได้ที่ไอคอนใน system tray",
         ["App.HookFailed"] = "เริ่มดักคีย์บอร์ดไม่ได้ {0}",
         ["App.ActionFailed"] = "\"{0}\" ทำงานไม่สำเร็จ",
-        ["App.StillRunningTitle"] = "Macro ยังทำงานอยู่",
-        ["App.StillRunningText"] = "ปุ่มลัดยังใช้ได้ตามปกติ เปิด Macro ได้จากไอคอนใน tray",
+        ["App.StillRunningTitle"] = "Clayboard ยังทำงานอยู่",
+        ["App.StillRunningText"] = "ปุ่มลัดยังใช้ได้ตามปกติ เปิด Clayboard ได้จากไอคอนใน tray",
 
-        ["Tray.Open"] = "เปิด Macro",
+        ["Tray.Open"] = "เปิด Clayboard",
         ["Tray.PauseAll"] = "หยุดทั้งหมดชั่วคราว",
         ["Tray.Reload"] = "โหลด config ใหม่",
         ["Tray.Exit"] = "ออก",
-        ["Tray.Paused"] = "Macro (หยุดชั่วคราว)",
+        ["Tray.Paused"] = "Clayboard (หยุดชั่วคราว)",
 
         ["Win.Minimize"] = "ย่อ",
         ["Win.Maximize"] = "ขยาย",
@@ -179,7 +179,7 @@ internal static partial class Strings
         ["Err.OneKey"] = "ใน \"{0}\" ใส่ปุ่มหลักได้ปุ่มเดียว",
         ["Err.UnknownKey"] = "ไม่รู้จักปุ่ม \"{0}\"",
         ["Err.NeedKey"] = "เพิ่มปุ่มอื่นนอกจาก Ctrl, Alt, Shift หรือ Win หรือใช้โหมดกดสองครั้ง/กดค้าง",
-        ["Err.Blocked"] = "Windows บล็อกการส่งปุ่ม ถ้าแอปปลายทางรันแบบ admin ต้องรัน Macro แบบ admin ด้วย",
+        ["Err.Blocked"] = "Windows บล็อกการส่งปุ่ม ถ้าแอปปลายทางรันแบบ admin ต้องรัน Clayboard แบบ admin ด้วย",
         ["Err.CloseApp"] = "ปิด ต้องมี \"process\" เช่น notepad.exe",
         ["Err.ToggleNeedsExe"] = "กดซ้ำเพื่อปิด ใช้ได้กับโปรแกรม (.exe) หรือต้องใส่ชื่อแอปที่จะปิด",
 
@@ -204,7 +204,7 @@ internal static partial class Strings
         ["Ed.Warn.CommonKey"] = "ระหว่างที่เปิดใช้ ปุ่มนี้จะใช้ในแอปอื่นไม่ได้ เพิ่ม Ctrl, Alt หรือ Win หรือปิดการบล็อกปุ่ม",
         ["Settings.Emergency"] = "หยุดฉุกเฉิน",
         ["Settings.EmergencyHint"] = "กด Ctrl+Alt+Shift+Pause ที่ไหนก็ได้ เพื่อหยุดหรือเปิดปุ่มลัดทั้งหมด",
-        ["Err.Unelevated"] = "Macro รันแบบ admin จึงเปิดโปรแกรมผ่าน Explorer แบบไม่มีสิทธิ์ admin แต่เปิดไม่สำเร็จ {0}",
+        ["Err.Unelevated"] = "Clayboard รันแบบ admin จึงเปิดโปรแกรมผ่าน Explorer แบบไม่มีสิทธิ์ admin แต่เปิดไม่สำเร็จ {0}",
         ["Cap.Hold"] = "ค้าง",
     };
 }

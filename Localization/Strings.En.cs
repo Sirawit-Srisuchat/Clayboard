@@ -1,23 +1,23 @@
 using System.Collections.Generic;
 
-namespace MacroInWZa007.Localization;
+namespace Clayboard.Localization;
 
 /// <summary>UI text per language. English is the source and fallback: every key must exist here.</summary>
 internal static partial class Strings
 {
     public static readonly Dictionary<string, string> En = new()
     {
-        ["App.AlreadyRunning"] = "Macro is already running. Look for it in the system tray.",
+        ["App.AlreadyRunning"] = "Clayboard is already running. Look for it in the system tray.",
         ["App.HookFailed"] = "Couldn't start listening to the keyboard. {0}",
         ["App.ActionFailed"] = "\"{0}\" didn't run",
-        ["App.StillRunningTitle"] = "Macro is still running",
-        ["App.StillRunningText"] = "Your hotkeys keep working. Open Macro from the tray icon.",
+        ["App.StillRunningTitle"] = "Clayboard is still running",
+        ["App.StillRunningText"] = "Your hotkeys keep working. Open Clayboard from the tray icon.",
 
-        ["Tray.Open"] = "Open Macro",
+        ["Tray.Open"] = "Open Clayboard",
         ["Tray.PauseAll"] = "Pause all",
         ["Tray.Reload"] = "Reload config",
         ["Tray.Exit"] = "Exit",
-        ["Tray.Paused"] = "Macro (paused)",
+        ["Tray.Paused"] = "Clayboard (paused)",
 
         ["Win.Minimize"] = "Minimize",
         ["Win.Maximize"] = "Maximize",
@@ -180,7 +180,7 @@ internal static partial class Strings
         ["Err.OneKey"] = "Only one main key is allowed in \"{0}\".",
         ["Err.UnknownKey"] = "Unknown key \"{0}\".",
         ["Err.NeedKey"] = "Add a key besides Ctrl, Alt, Shift, or Win, or use double-tap or hold.",
-        ["Err.Blocked"] = "Windows blocked the keystrokes. If the target app runs as admin, run Macro as admin too.",
+        ["Err.Blocked"] = "Windows blocked the keystrokes. If the target app runs as admin, run Clayboard as admin too.",
         ["Err.CloseApp"] = "Close needs a \"process\", such as notepad.exe.",
         ["Err.ToggleNeedsExe"] = "Press again to close needs a program (.exe), or the name of the app to close.",
 
@@ -195,9 +195,9 @@ internal static partial class Strings
         ["Desc.MacroN"] = "Macro · {0} steps",
         ["Desc.Wait"] = "Wait {0} ms",
         ["Cap.Then"] = "then",
-        ["Trust.Banner"] = "Changed outside Macro and paused until you allow them: {0}",
+        ["Trust.Banner"] = "Changed outside Clayboard and paused until you allow them: {0}",
         ["Trust.Allow"] = "Allow",
-        ["Trust.ItemError"] = "Changed outside Macro, so it's paused. Allow it above, or open and save it.",
+        ["Trust.ItemError"] = "Changed outside Clayboard, so it's paused. Allow it above, or open and save it.",
         ["Ed.Secret"] = "Keep this text secret",
         ["Ed.SecretHint"] = "Saved encrypted. Only your Windows account on this PC can read it.",
         ["Err.SecretUnreadable"] = "This secret text was saved on another PC or account. Type it again.",
@@ -205,7 +205,7 @@ internal static partial class Strings
         ["Ed.Warn.CommonKey"] = "While this is on, the key stops working in every other app. Add Ctrl, Alt, or Win, or turn off blocking.",
         ["Settings.Emergency"] = "Emergency pause",
         ["Settings.EmergencyHint"] = "Press Ctrl+Alt+Shift+Pause anywhere to pause or resume every binding.",
-        ["Err.Unelevated"] = "Macro is running as admin, so it opens programs through Explorer without admin rights, and that failed. {0}",
+        ["Err.Unelevated"] = "Clayboard is running as admin, so it opens programs through Explorer without admin rights, and that failed. {0}",
         ["Cap.Hold"] = "hold",
     };
 }

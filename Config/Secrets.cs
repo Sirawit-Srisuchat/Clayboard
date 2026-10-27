@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace MacroInWZa007.Config;
+namespace Clayboard.Config;
 
 /// <summary>
 /// Encrypts text with Windows DPAPI for the current user, so a secret in config.json can only be
@@ -13,6 +13,7 @@ public static class Secrets
     private const int CRYPTPROTECT_UI_FORBIDDEN = 0x1;
 
     // Ties the ciphertext to this app, so other DPAPI users can't trivially decrypt it as theirs.
+    // Keeps the app's former name on purpose: changing it would make every saved secret unreadable.
     private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("MacroInWZa007.Secret.v1");
 
     [StructLayout(LayoutKind.Sequential)]

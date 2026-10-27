@@ -4,7 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace MacroInWZa007.Input;
+namespace Clayboard.Input;
 
 /// <summary>
 /// Keeps the process name of the foreground window up to date, so the keyboard hook can

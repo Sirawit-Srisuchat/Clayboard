@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Input;
-using MacroInWZa007.Localization;
+using Clayboard.Localization;
 
-namespace MacroInWZa007.Core;
+namespace Clayboard.Core;
 
 [Flags]
 public enum Mods

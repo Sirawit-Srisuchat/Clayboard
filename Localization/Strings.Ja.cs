@@ -1,22 +1,22 @@
 using System.Collections.Generic;
 
-namespace MacroInWZa007.Localization;
+namespace Clayboard.Localization;
 
 internal static partial class Strings
 {
     public static readonly Dictionary<string, string> Ja = new()
     {
-        ["App.AlreadyRunning"] = "Macro はすでに起動しています。システムトレイを確認してください。",
+        ["App.AlreadyRunning"] = "Clayboard はすでに起動しています。システムトレイを確認してください。",
         ["App.HookFailed"] = "キーボードの監視を開始できませんでした。{0}",
         ["App.ActionFailed"] = "「{0}」を実行できませんでした",
-        ["App.StillRunningTitle"] = "Macro は動作中です",
-        ["App.StillRunningText"] = "ホットキーは引き続き使えます。トレイアイコンから Macro を開けます。",
+        ["App.StillRunningTitle"] = "Clayboard は動作中です",
+        ["App.StillRunningText"] = "ホットキーは引き続き使えます。トレイアイコンから Clayboard を開けます。",
 
-        ["Tray.Open"] = "Macro を開く",
+        ["Tray.Open"] = "Clayboard を開く",
         ["Tray.PauseAll"] = "すべて一時停止",
         ["Tray.Reload"] = "設定を再読み込み",
         ["Tray.Exit"] = "終了",
-        ["Tray.Paused"] = "Macro (一時停止中)",
+        ["Tray.Paused"] = "Clayboard (一時停止中)",
 
         ["Win.Minimize"] = "最小化",
         ["Win.Maximize"] = "最大化",
@@ -179,7 +179,7 @@ internal static partial class Strings
         ["Err.OneKey"] = "「{0}」に指定できるメインキーは 1 つだけです。",
         ["Err.UnknownKey"] = "不明なキー「{0}」です。",
         ["Err.NeedKey"] = "Ctrl、Alt、Shift、Win 以外のキーを追加するか、2 回押しか長押しを使ってください。",
-        ["Err.Blocked"] = "Windows がキー入力をブロックしました。対象アプリが管理者として実行されている場合は、Macro も管理者として実行してください。",
+        ["Err.Blocked"] = "Windows がキー入力をブロックしました。対象アプリが管理者として実行されている場合は、Clayboard も管理者として実行してください。",
         ["Err.CloseApp"] = "閉じるには \"process\" が必要です (例: notepad.exe)。",
         ["Err.ToggleNeedsExe"] = "「もう一度押すと閉じる」にはプログラム (.exe) か、閉じるアプリ名の指定が必要です。",
 
@@ -194,9 +194,9 @@ internal static partial class Strings
         ["Desc.MacroN"] = "マクロ · {0} ステップ",
         ["Desc.Wait"] = "{0} ms 待機",
         ["Cap.Then"] = "次に",
-        ["Trust.Banner"] = "Macro の外で変更されたため、許可するまで停止しています: {0}",
+        ["Trust.Banner"] = "Clayboard の外で変更されたため、許可するまで停止しています: {0}",
         ["Trust.Allow"] = "許可",
-        ["Trust.ItemError"] = "Macro の外で変更されたため停止中です。上で許可するか、開いて保存してください。",
+        ["Trust.ItemError"] = "Clayboard の外で変更されたため停止中です。上で許可するか、開いて保存してください。",
         ["Ed.Secret"] = "このテキストを秘密にする",
         ["Ed.SecretHint"] = "暗号化して保存します。この PC のあなたの Windows アカウントだけが読み取れます。",
         ["Err.SecretUnreadable"] = "この秘密のテキストは別の PC またはアカウントで保存されました。もう一度入力してください。",
@@ -204,7 +204,7 @@ internal static partial class Strings
         ["Ed.Warn.CommonKey"] = "オンの間、このキーは他のアプリで使えなくなります。Ctrl、Alt、Win を追加するか、ブロックをオフにしてください。",
         ["Settings.Emergency"] = "緊急停止",
         ["Settings.EmergencyHint"] = "どこでも Ctrl+Alt+Shift+Pause を押すと、すべてのホットキーを一時停止または再開します。",
-        ["Err.Unelevated"] = "Macro は管理者として実行中のため、Explorer 経由で管理者権限なしにプログラムを開こうとしましたが、失敗しました。{0}",
+        ["Err.Unelevated"] = "Clayboard は管理者として実行中のため、Explorer 経由で管理者権限なしにプログラムを開こうとしましたが、失敗しました。{0}",
         ["Cap.Hold"] = "長押し",
     };
 }

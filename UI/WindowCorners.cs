@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 
-namespace MacroInWZa007.UI;
+namespace Clayboard.UI;
 
 /// <summary>Asks Windows 11 to round a borderless window's corners (ignored on Windows 10).</summary>
 internal static class WindowCorners

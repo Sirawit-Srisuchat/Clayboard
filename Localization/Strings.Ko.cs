@@ -1,22 +1,22 @@
 using System.Collections.Generic;
 
-namespace MacroInWZa007.Localization;
+namespace Clayboard.Localization;
 
 internal static partial class Strings
 {
     public static readonly Dictionary<string, string> Ko = new()
     {
-        ["App.AlreadyRunning"] = "Macro가 이미 실행 중입니다. 시스템 트레이를 확인하세요.",
+        ["App.AlreadyRunning"] = "Clayboard가 이미 실행 중입니다. 시스템 트레이를 확인하세요.",
         ["App.HookFailed"] = "키보드 감지를 시작할 수 없습니다. {0}",
         ["App.ActionFailed"] = "\"{0}\" 실행 실패",
-        ["App.StillRunningTitle"] = "Macro가 계속 실행 중입니다",
-        ["App.StillRunningText"] = "단축키는 계속 작동합니다. 트레이 아이콘에서 Macro를 여세요.",
+        ["App.StillRunningTitle"] = "Clayboard가 계속 실행 중입니다",
+        ["App.StillRunningText"] = "단축키는 계속 작동합니다. 트레이 아이콘에서 Clayboard를 여세요.",
 
-        ["Tray.Open"] = "Macro 열기",
+        ["Tray.Open"] = "Clayboard 열기",
         ["Tray.PauseAll"] = "모두 일시 중지",
         ["Tray.Reload"] = "설정 다시 불러오기",
         ["Tray.Exit"] = "종료",
-        ["Tray.Paused"] = "Macro (일시 중지됨)",
+        ["Tray.Paused"] = "Clayboard (일시 중지됨)",
 
         ["Win.Minimize"] = "최소화",
         ["Win.Maximize"] = "최대화",
@@ -179,7 +179,7 @@ internal static partial class Strings
         ["Err.OneKey"] = "\"{0}\"에는 기본 키를 하나만 넣을 수 있습니다.",
         ["Err.UnknownKey"] = "알 수 없는 키 \"{0}\".",
         ["Err.NeedKey"] = "Ctrl, Alt, Shift, Win 외의 키를 추가하거나 두 번 누르기/길게 누르기를 쓰세요.",
-        ["Err.Blocked"] = "Windows가 키 입력을 차단했습니다. 대상 앱이 관리자 권한으로 실행 중이면 Macro도 관리자 권한으로 실행하세요.",
+        ["Err.Blocked"] = "Windows가 키 입력을 차단했습니다. 대상 앱이 관리자 권한으로 실행 중이면 Clayboard도 관리자 권한으로 실행하세요.",
         ["Err.CloseApp"] = "닫기에는 \"process\"가 필요합니다. 예: notepad.exe",
         ["Err.ToggleNeedsExe"] = "한 번 더 누르면 닫기는 프로그램(.exe)이나 닫을 앱 이름이 있어야 합니다.",
 
@@ -194,9 +194,9 @@ internal static partial class Strings
         ["Desc.MacroN"] = "매크로 · {0}단계",
         ["Desc.Wait"] = "{0} ms 대기",
         ["Cap.Then"] = "다음",
-        ["Trust.Banner"] = "Macro 밖에서 변경되어 허용할 때까지 중지됨: {0}",
+        ["Trust.Banner"] = "Clayboard 밖에서 변경되어 허용할 때까지 중지됨: {0}",
         ["Trust.Allow"] = "허용",
-        ["Trust.ItemError"] = "Macro 밖에서 변경되어 중지되었습니다. 위에서 허용하거나 열어서 저장하세요.",
+        ["Trust.ItemError"] = "Clayboard 밖에서 변경되어 중지되었습니다. 위에서 허용하거나 열어서 저장하세요.",
         ["Ed.Secret"] = "이 텍스트를 비밀로 보관",
         ["Ed.SecretHint"] = "암호화해서 저장합니다. 이 PC의 내 Windows 계정만 읽을 수 있습니다.",
         ["Err.SecretUnreadable"] = "이 비밀 텍스트는 다른 PC나 계정에서 저장되었습니다. 다시 입력하세요.",
@@ -204,7 +204,7 @@ internal static partial class Strings
         ["Ed.Warn.CommonKey"] = "켜져 있는 동안 이 키는 다른 앱에서 작동하지 않습니다. Ctrl, Alt, Win을 추가하거나 차단을 끄세요.",
         ["Settings.Emergency"] = "긴급 일시 중지",
         ["Settings.EmergencyHint"] = "어디서든 Ctrl+Alt+Shift+Pause를 누르면 모든 단축키를 일시 중지하거나 재개합니다.",
-        ["Err.Unelevated"] = "Macro가 관리자 권한으로 실행 중이라 Explorer를 통해 관리자 권한 없이 프로그램을 열려고 했지만 실패했습니다. {0}",
+        ["Err.Unelevated"] = "Clayboard가 관리자 권한으로 실행 중이라 Explorer를 통해 관리자 권한 없이 프로그램을 열려고 했지만 실패했습니다. {0}",
         ["Cap.Hold"] = "길게",
     };
 }

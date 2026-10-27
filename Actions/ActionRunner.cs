@@ -5,12 +5,12 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
-using MacroInWZa007.Config;
-using MacroInWZa007.Core;
-using MacroInWZa007.Input;
-using MacroInWZa007.Localization;
+using Clayboard.Config;
+using Clayboard.Core;
+using Clayboard.Input;
+using Clayboard.Localization;
 
-namespace MacroInWZa007.Actions;
+namespace Clayboard.Actions;
 
 /// <summary>Validates, describes, and runs <see cref="ActionSpec"/>s.</summary>
 public static class ActionRunner

@@ -7,8 +7,8 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
-    <RootNamespace>MacroInWZa007</RootNamespace>
-    <AssemblyName>MacroInWZa007</AssemblyName>
+    <RootNamespace>Clayboard</RootNamespace>
+    <AssemblyName>Clayboard</AssemblyName>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 

@@ -12,10 +12,10 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-using MacroInWZa007.Core;
-using MacroInWZa007.Localization;
+using Clayboard.Core;
+using Clayboard.Localization;
 
-namespace MacroInWZa007.UI;
+namespace Clayboard.UI;
 
 /// <summary>
 /// Box that records keys through the global hook when clicked. In <see cref="Multi"/> mode it records

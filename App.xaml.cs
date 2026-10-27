@@ -6,12 +6,12 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
 using System.Windows.Media.Imaging;
-using MacroInWZa007.Config;
-using MacroInWZa007.Core;
-using MacroInWZa007.Localization;
-using MacroInWZa007.UI;
+using Clayboard.Config;
+using Clayboard.Core;
+using Clayboard.Localization;
+using Clayboard.UI;
 
-namespace MacroInWZa007;
+namespace Clayboard;
 
 public partial class App : Application
 {
@@ -32,10 +32,10 @@ public partial class App : Application
 
         // The mutex is only a fast check: anything can create one with this name, so before giving up,
         // confirm a real copy of Macro is running. Otherwise a squatted name could keep Macro from starting.
-        _instanceMutex = new Mutex(true, "MacroInWZa007.SingleInstance", out _ownsMutex);
+        _instanceMutex = new Mutex(true, "Clayboard.SingleInstance", out _ownsMutex);
         if (!_ownsMutex && AnotherCopyIsRunning())
         {
-            MessageBox.Show(Loc.T("App.AlreadyRunning"), "Macro");
+            MessageBox.Show(Loc.T("App.AlreadyRunning"), "Clayboard");
             Shutdown();
             return;
         }
@@ -62,7 +62,7 @@ public partial class App : Application
         }
         catch (Win32Exception ex)
         {
-            MessageBox.Show(Loc.F("App.HookFailed", ex.Message), "Macro");
+            MessageBox.Show(Loc.F("App.HookFailed", ex.Message), "Clayboard");
         }
 
         if (e.Args.Contains("--tray"))

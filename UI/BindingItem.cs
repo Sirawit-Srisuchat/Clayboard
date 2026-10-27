@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using MacroInWZa007.Actions;
-using MacroInWZa007.Core;
-using MacroInWZa007.Input;
-using MacroInWZa007.Localization;
+using Clayboard.Actions;
+using Clayboard.Core;
+using Clayboard.Input;
+using Clayboard.Localization;
 
-namespace MacroInWZa007.UI;
+namespace Clayboard.UI;
 
 /// <summary>One row of the bindings list.</summary>
 public sealed class BindingItem : INotifyPropertyChanged

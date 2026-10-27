@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace MacroInWZa007.Input;
+namespace Clayboard.Input;
 
 /// <summary>
 /// Finds and closes an app's windows the polite way, by sending WM_CLOSE as the × button does,

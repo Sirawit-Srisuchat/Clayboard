@@ -1,10 +1,10 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using MacroInWZa007.Actions;
-using MacroInWZa007.Core;
-using MacroInWZa007.Localization;
+using Clayboard.Actions;
+using Clayboard.Core;
+using Clayboard.Localization;
 
-namespace MacroInWZa007.UI;
+namespace Clayboard.UI;
 
 public abstract class Observable : INotifyPropertyChanged
 {

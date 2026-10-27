@@ -7,12 +7,12 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Windows.Data;
-using MacroInWZa007.Config;
-using MacroInWZa007.Core;
-using MacroInWZa007.Input;
-using MacroInWZa007.Localization;
+using Clayboard.Config;
+using Clayboard.Core;
+using Clayboard.Input;
+using Clayboard.Localization;
 
-namespace MacroInWZa007.UI;
+namespace Clayboard.UI;
 
 /// <summary>Which bindings the list shows.</summary>
 public enum ListScope

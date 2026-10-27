@@ -2,13 +2,14 @@ using System;
 using System.IO;
 using Microsoft.Win32;
 
-namespace MacroInWZa007.Config;
+namespace Clayboard.Config;
 
 /// <summary>Turns "start with Windows" on or off through the current user's Run key.</summary>
 public static class StartupManager
 {
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName = "MacroInWZa007";
+    private const string ValueName = "Clayboard";
+    private const string LegacyValueName = "MacroInWZa007"; // The app's name before it became Clayboard.
 
     public static bool IsEnabled
     {
@@ -34,6 +35,7 @@ public static class StartupManager
     /// </summary>
     public static void RefreshPath()
     {
+        MigrateLegacyEntry();
         using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath);
         if (key?.GetValue(ValueName) is not string command)
             return;
@@ -41,5 +43,15 @@ public static class StartupManager
         var registered = closingQuote > 0 ? command[1..closingQuote] : command.Split(' ')[0];
         if (!File.Exists(registered))
             SetEnabled(true);
+    }
+
+    // Someone who turned startup on under the old name keeps it, now pointing at Clayboard.
+    private static void MigrateLegacyEntry()
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: true);
+        if (key?.GetValue(LegacyValueName) is not string)
+            return;
+        key.DeleteValue(LegacyValueName, throwOnMissingValue: false);
+        SetEnabled(true);
     }
 }

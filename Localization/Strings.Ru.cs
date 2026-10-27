@@ -1,22 +1,22 @@
 using System.Collections.Generic;
 
-namespace MacroInWZa007.Localization;
+namespace Clayboard.Localization;
 
 internal static partial class Strings
 {
     public static readonly Dictionary<string, string> Ru = new()
     {
-        ["App.AlreadyRunning"] = "Macro уже запущен. Найдите его в области уведомлений.",
+        ["App.AlreadyRunning"] = "Clayboard уже запущен. Найдите его в области уведомлений.",
         ["App.HookFailed"] = "Не удалось начать отслеживание клавиатуры. {0}",
         ["App.ActionFailed"] = "«{0}» не выполнено",
-        ["App.StillRunningTitle"] = "Macro продолжает работать",
-        ["App.StillRunningText"] = "Горячие клавиши работают. Откройте Macro через значок в трее.",
+        ["App.StillRunningTitle"] = "Clayboard продолжает работать",
+        ["App.StillRunningText"] = "Горячие клавиши работают. Откройте Clayboard через значок в трее.",
 
-        ["Tray.Open"] = "Открыть Macro",
+        ["Tray.Open"] = "Открыть Clayboard",
         ["Tray.PauseAll"] = "Приостановить всё",
         ["Tray.Reload"] = "Перезагрузить настройки",
         ["Tray.Exit"] = "Выход",
-        ["Tray.Paused"] = "Macro (на паузе)",
+        ["Tray.Paused"] = "Clayboard (на паузе)",
 
         ["Win.Minimize"] = "Свернуть",
         ["Win.Maximize"] = "Развернуть",
@@ -179,7 +179,7 @@ internal static partial class Strings
         ["Err.OneKey"] = "В «{0}» допускается только одна основная клавиша.",
         ["Err.UnknownKey"] = "Неизвестная клавиша «{0}».",
         ["Err.NeedKey"] = "Добавьте клавишу помимо Ctrl, Alt, Shift или Win либо используйте двойное нажатие или удержание.",
-        ["Err.Blocked"] = "Windows заблокировала нажатия. Если целевое приложение запущено от имени администратора, запустите Macro так же.",
+        ["Err.Blocked"] = "Windows заблокировала нажатия. Если целевое приложение запущено от имени администратора, запустите Clayboard так же.",
         ["Err.CloseApp"] = "Для закрытия нужен \"process\", например notepad.exe.",
         ["Err.ToggleNeedsExe"] = "Повторное закрытие работает с программой (.exe) или с указанным приложением.",
 
@@ -194,9 +194,9 @@ internal static partial class Strings
         ["Desc.MacroN"] = "Макрос · шагов: {0}",
         ["Desc.Wait"] = "Пауза {0} мс",
         ["Cap.Then"] = "затем",
-        ["Trust.Banner"] = "Изменено вне Macro и приостановлено до разрешения: {0}",
+        ["Trust.Banner"] = "Изменено вне Clayboard и приостановлено до разрешения: {0}",
         ["Trust.Allow"] = "Разрешить",
-        ["Trust.ItemError"] = "Изменено вне Macro, поэтому приостановлено. Разрешите выше или откройте и сохраните.",
+        ["Trust.ItemError"] = "Изменено вне Clayboard, поэтому приостановлено. Разрешите выше или откройте и сохраните.",
         ["Ed.Secret"] = "Хранить текст в секрете",
         ["Ed.SecretHint"] = "Сохраняется в зашифрованном виде. Прочитать может только ваша учётная запись Windows на этом ПК.",
         ["Err.SecretUnreadable"] = "Этот секретный текст сохранён на другом ПК или в другой учётной записи. Введите его заново.",
@@ -204,7 +204,7 @@ internal static partial class Strings
         ["Ed.Warn.CommonKey"] = "Пока сочетание включено, эта клавиша не работает в других приложениях. Добавьте Ctrl, Alt или Win или отключите блокировку.",
         ["Settings.Emergency"] = "Экстренная пауза",
         ["Settings.EmergencyHint"] = "Нажмите Ctrl+Alt+Shift+Pause где угодно, чтобы приостановить или возобновить все сочетания.",
-        ["Err.Unelevated"] = "Macro запущен от имени администратора, поэтому открывает программы через Проводник без прав администратора, но это не удалось. {0}",
+        ["Err.Unelevated"] = "Clayboard запущен от имени администратора, поэтому открывает программы через Проводник без прав администратора, но это не удалось. {0}",
         ["Cap.Hold"] = "удерж.",
     };
 }

@@ -9,13 +9,13 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
-using MacroInWZa007.Actions;
-using MacroInWZa007.Config;
-using MacroInWZa007.Core;
-using MacroInWZa007.Localization;
+using Clayboard.Actions;
+using Clayboard.Config;
+using Clayboard.Core;
+using Clayboard.Localization;
 using Microsoft.Win32;
 
-namespace MacroInWZa007.UI;
+namespace Clayboard.UI;
 
 /// <summary>Dialog for creating or editing one binding.</summary>
 public partial class BindingEditorWindow : Window

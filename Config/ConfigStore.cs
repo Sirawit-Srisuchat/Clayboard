@@ -4,14 +4,14 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
-using MacroInWZa007.Core;
+using Clayboard.Core;
 
-namespace MacroInWZa007.Config;
+namespace Clayboard.Config;
 
 /// <summary>
 /// Loads and saves config.json and reports edits made to it from outside the app.
 /// The file lives next to the exe when one is already there (portable mode),
-/// otherwise in %AppData%\MacroInWZa007.
+/// otherwise in %AppData%\Clayboard.
 /// </summary>
 public sealed class ConfigStore : IDisposable
 {
@@ -33,10 +33,7 @@ public sealed class ConfigStore : IDisposable
 
     public ConfigStore()
     {
-        var folder = IsPortable
-            ? AppContext.BaseDirectory
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MacroInWZa007");
-        Directory.CreateDirectory(folder);
+        var folder = IsPortable ? AppContext.BaseDirectory : AppDataFolder;
         FilePath = Path.Combine(folder, "config.json");
 
         _debounce = new Timer(_ => OnDebounced());
@@ -51,6 +48,25 @@ public sealed class ConfigStore : IDisposable
     }
 
     public string FilePath { get; }
+
+    /// <summary>%AppData%\Clayboard, filled from the app's former folder the first time it's used.</summary>
+    public static string AppDataFolder { get; } = PrepareAppDataFolder();
+
+    private static string PrepareAppDataFolder()
+    {
+        var roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        var folder = Path.Combine(roaming, "Clayboard");
+        var legacy = Path.Combine(roaming, "MacroInWZa007"); // The app's name before it became Clayboard.
+        if (!Directory.Exists(folder) && Directory.Exists(legacy))
+        {
+            // Copy rather than move, so the old folder is still there if anything goes wrong.
+            Directory.CreateDirectory(folder);
+            foreach (var file in Directory.GetFiles(legacy, "*.json"))
+                File.Copy(file, Path.Combine(folder, Path.GetFileName(file)));
+        }
+        Directory.CreateDirectory(folder);
+        return folder;
+    }
 
     /// <summary>True when a config.json sits next to the exe, so settings travel with the folder.</summary>
     public static bool IsPortable => File.Exists(Path.Combine(AppContext.BaseDirectory, "config.json"));

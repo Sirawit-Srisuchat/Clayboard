@@ -1,23 +1,23 @@
 using System.Collections.Generic;
 
-namespace MacroInWZa007.Localization;
+namespace Clayboard.Localization;
 
 internal static partial class Strings
 {
     /// <summary>Simplified Chinese.</summary>
     public static readonly Dictionary<string, string> Zh = new()
     {
-        ["App.AlreadyRunning"] = "Macro 已在运行。请在系统托盘中查看。",
+        ["App.AlreadyRunning"] = "Clayboard 已在运行。请在系统托盘中查看。",
         ["App.HookFailed"] = "无法开始监听键盘。{0}",
         ["App.ActionFailed"] = "“{0}”未能运行",
-        ["App.StillRunningTitle"] = "Macro 仍在运行",
-        ["App.StillRunningText"] = "快捷键仍然有效。可从托盘图标打开 Macro。",
+        ["App.StillRunningTitle"] = "Clayboard 仍在运行",
+        ["App.StillRunningText"] = "快捷键仍然有效。可从托盘图标打开 Clayboard。",
 
-        ["Tray.Open"] = "打开 Macro",
+        ["Tray.Open"] = "打开 Clayboard",
         ["Tray.PauseAll"] = "全部暂停",
         ["Tray.Reload"] = "重新加载配置",
         ["Tray.Exit"] = "退出",
-        ["Tray.Paused"] = "Macro (已暂停)",
+        ["Tray.Paused"] = "Clayboard (已暂停)",
 
         ["Win.Minimize"] = "最小化",
         ["Win.Maximize"] = "最大化",
@@ -180,7 +180,7 @@ internal static partial class Strings
         ["Err.OneKey"] = "“{0}”中只能有一个主键。",
         ["Err.UnknownKey"] = "未知按键“{0}”。",
         ["Err.NeedKey"] = "请添加 Ctrl、Alt、Shift、Win 以外的按键，或使用双击/长按。",
-        ["Err.Blocked"] = "Windows 阻止了按键输入。如果目标应用以管理员身份运行，请也以管理员身份运行 Macro。",
+        ["Err.Blocked"] = "Windows 阻止了按键输入。如果目标应用以管理员身份运行，请也以管理员身份运行 Clayboard。",
         ["Err.CloseApp"] = "关闭需要 \"process\"，例如 notepad.exe。",
         ["Err.ToggleNeedsExe"] = "“再按一次关闭”需要程序 (.exe)，或填写要关闭的应用名称。",
 
@@ -195,9 +195,9 @@ internal static partial class Strings
         ["Desc.MacroN"] = "宏 · {0} 步",
         ["Desc.Wait"] = "等待 {0} ms",
         ["Cap.Then"] = "然后",
-        ["Trust.Banner"] = "在 Macro 之外被修改，允许前已暂停：{0}",
+        ["Trust.Banner"] = "在 Clayboard 之外被修改，允许前已暂停：{0}",
         ["Trust.Allow"] = "允许",
-        ["Trust.ItemError"] = "在 Macro 之外被修改，已暂停。请在上方允许，或打开后重新保存。",
+        ["Trust.ItemError"] = "在 Clayboard 之外被修改，已暂停。请在上方允许，或打开后重新保存。",
         ["Ed.Secret"] = "将此文本设为机密",
         ["Ed.SecretHint"] = "加密保存，只有这台电脑上你的 Windows 账户可以读取。",
         ["Err.SecretUnreadable"] = "此机密文本是在其他电脑或账户上保存的。请重新输入。",
@@ -205,7 +205,7 @@ internal static partial class Strings
         ["Ed.Warn.CommonKey"] = "启用期间，此键在其他应用中将无法使用。请添加 Ctrl、Alt 或 Win，或关闭拦截。",
         ["Settings.Emergency"] = "紧急暂停",
         ["Settings.EmergencyHint"] = "在任何地方按 Ctrl+Alt+Shift+Pause 可暂停或恢复所有快捷键。",
-        ["Err.Unelevated"] = "Macro 以管理员身份运行，因此通过资源管理器以非管理员身份打开程序，但失败了。{0}",
+        ["Err.Unelevated"] = "Clayboard 以管理员身份运行，因此通过资源管理器以非管理员身份打开程序，但失败了。{0}",
         ["Cap.Hold"] = "长按",
     };
 }

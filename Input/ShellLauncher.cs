@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 
-namespace MacroInWZa007.Input;
+namespace Clayboard.Input;
 
 /// <summary>
 /// Starts programs without admin rights even when Macro itself runs as admin, by asking the

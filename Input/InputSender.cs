@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
-using MacroInWZa007.Core;
-using MacroInWZa007.Localization;
-using static MacroInWZa007.Input.NativeMethods;
+using Clayboard.Core;
+using Clayboard.Localization;
+using static Clayboard.Input.NativeMethods;
 
-namespace MacroInWZa007.Input;
+namespace Clayboard.Input;
 
 /// <summary>Synthesizes keyboard input with SendInput.</summary>
 public static class InputSender

@@ -2,9 +2,9 @@ using System;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
-using MacroInWZa007.Localization;
+using Clayboard.Localization;
 
-namespace MacroInWZa007.UI;
+namespace Clayboard.UI;
 
 /// <summary>Notification-area icon with the app's quick actions.</summary>
 public sealed class TrayIcon : IDisposable
@@ -68,6 +68,6 @@ public sealed class TrayIcon : IDisposable
         _pauseItem.Text = Loc.T("Tray.PauseAll");
         _reloadItem.Text = Loc.T("Tray.Reload");
         _exitItem.Text = Loc.T("Tray.Exit");
-        _icon.Text = _pauseItem.Checked ? Loc.T("Tray.Paused") : "Macro";
+        _icon.Text = _pauseItem.Checked ? Loc.T("Tray.Paused") : "Clayboard";
     }
 }

@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
-using MacroInWZa007.Actions;
-using MacroInWZa007.Input;
+using Clayboard.Actions;
+using Clayboard.Input;
 
-namespace MacroInWZa007.Core;
+namespace Clayboard.Core;
 
 /// <summary>
 /// Receives key capture progress. <paramref name="vk"/> is 0 while only modifiers are held;

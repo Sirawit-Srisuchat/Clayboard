@@ -5,7 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 
-namespace MacroInWZa007.Localization;
+namespace Clayboard.Localization;
 
 /// <summary>
 /// UI language switching. Code reads strings with <see cref="T"/> and <see cref="F"/>;

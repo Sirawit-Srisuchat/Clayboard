@@ -5,9 +5,9 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using MacroInWZa007.Core;
+using Clayboard.Core;
 
-namespace MacroInWZa007.Config;
+namespace Clayboard.Config;
 
 /// <summary>
 /// Remembers which actions the user has seen and approved, as fingerprints, so an action that
@@ -22,9 +22,7 @@ public sealed class TrustStore
 
     public TrustStore()
     {
-        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MacroInWZa007");
-        Directory.CreateDirectory(folder);
-        _path = Path.Combine(folder, "trusted.json");
+        _path = Path.Combine(ConfigStore.AppDataFolder, "trusted.json");
         IsNew = !File.Exists(_path);
         _trusted = IsNew ? new HashSet<string>() : Read(_path);
     }

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace MacroInWZa007.Core;
+namespace Clayboard.Core;
 
 public sealed class AppConfig
 {

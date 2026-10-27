@@ -1,13 +1,13 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
-using static MacroInWZa007.Input.NativeMethods;
+using static Clayboard.Input.NativeMethods;
 
-namespace MacroInWZa007.Input;
+namespace Clayboard.Input;
 
 /// <summary>
 /// Global low-level keyboard hook. Must be installed on a thread that pumps messages
-/// (the WPF UI thread); the handler runs on that thread and must return quickly.
+/// (the engine's own hook thread); the handler runs on that thread and must return quickly.
 /// </summary>
 public sealed class KeyboardHook : IDisposable
 {

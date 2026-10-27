@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MacroInWZa007.Localization;
+using Clayboard.Localization;
 
-namespace MacroInWZa007.Core;
+namespace Clayboard.Core;
 
 public enum TriggerMode
 {
