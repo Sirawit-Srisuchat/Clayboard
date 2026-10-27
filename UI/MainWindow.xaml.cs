@@ -130,6 +130,19 @@ public partial class MainWindow : Window
         _syncingStartupSwitch = false;
     }
 
+    private void OnSequenceWaitKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+            OnSequenceWaitCommitted(sender, e);
+    }
+
+    private void OnSequenceWaitCommitted(object sender, RoutedEventArgs e)
+    {
+        // Anything unreadable falls back to the current value; out-of-range numbers are clamped.
+        int ms = int.TryParse(SequenceWaitBox.Text.Trim(), out int typed) ? typed : _viewModel.SequenceTimeoutMs;
+        SequenceWaitBox.Text = _viewModel.SetSequenceTimeout(ms).ToString();
+    }
+
     private void OnOpenConfigFolder(object sender, RoutedEventArgs e) =>
         Process.Start("explorer.exe", $"/select,\"{_viewModel.ConfigPath}\"");
 
@@ -166,6 +179,7 @@ public partial class MainWindow : Window
                 break;
             default:
                 SyncStartupSwitch();
+                SequenceWaitBox.Text = _viewModel.SequenceTimeoutMs.ToString();
                 foreach (RadioButton chip in LanguageChips.Children)
                     chip.IsChecked = (string)chip.Tag == Loc.Language;
                 ShowPage(SettingsPage);

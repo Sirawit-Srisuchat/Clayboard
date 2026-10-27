@@ -20,7 +20,9 @@ public delegate void CaptureHandler(Mods mods, int vk, bool done);
 /// </summary>
 public sealed class HotkeyEngine : IDisposable
 {
-    private const int SequenceTimeoutMs = 1500;
+    public const int DefaultSequenceTimeoutMs = 1500;
+    public const int MinSequenceTimeoutMs = 200;
+    public const int MaxSequenceTimeoutMs = 5000;
     private const int DoubleTapMs = 400;
 
     private sealed record Entry(TriggerSpec Trigger, HotkeyBinding Binding, string? App);
@@ -51,6 +53,12 @@ public sealed class HotkeyEngine : IDisposable
     private List<Entry> _sequence = new();
     private int _sequenceIndex;
     private long _sequenceDeadline;
+    private readonly DispatcherTimer _sequenceTimer = new();
+
+    // Keys held back while waiting to see whether a sequence continues. If it doesn't,
+    // they're typed after all, so keys that start a sequence still work on their own.
+    private readonly List<KeyCombo> _sequenceHeldBack = new();
+    private bool _replayedForThisKey;
 
     // Last press, for double-taps. Lone modifiers are tracked apart from other keys, because
     // re-pressing Ctrl+Alt between two taps of Ctrl+Alt+K must not break the double-tap.
@@ -75,7 +83,11 @@ public sealed class HotkeyEngine : IDisposable
     {
         _hook = new KeyboardHook(OnKey);
         _holdTimer.Tick += (_, _) => OnHoldElapsed();
+        _sequenceTimer.Tick += (_, _) => ReplayHeldBackKeys();
     }
+
+    /// <summary>How long to wait for the next step of a sequence before typing the held-back keys.</summary>
+    public int SequenceTimeoutMs { get; set; } = DefaultSequenceTimeoutMs;
 
     public event Action<HotkeyBinding, Exception>? ActionFailed;
 
@@ -135,6 +147,7 @@ public sealed class HotkeyEngine : IDisposable
         _hook.Dispose();
         _foreground.Dispose();
         _holdTimer.Stop();
+        _sequenceTimer.Stop();
     }
 
     private bool OnKey(int vk, bool isDown)
@@ -163,9 +176,23 @@ public sealed class HotkeyEngine : IDisposable
         long now = Environment.TickCount64;
         string app = _foreground.CurrentApp;
 
+        _replayedForThisKey = false;
         if (_sequence.Count > 0 && ContinueSequence(combo, vk, now, out bool swallowed))
             return swallowed;
 
+        bool swallowFresh = HandleFreshPress(combo, vk, now, app);
+        if (!swallowFresh && _replayedForThisKey)
+        {
+            // The held-back keys were just re-sent and are queued behind this key. Send this one
+            // after them instead, so "1" then "5" still types "15" and not "51".
+            InputSender.SendKeyDown(vk);
+            return true;
+        }
+        return swallowFresh;
+    }
+
+    private bool HandleFreshPress(KeyCombo combo, int vk, long now, string app)
+    {
         var candidates = _entries
             .Where(e => e.Trigger.First == combo && (e.App is null || e.App == app))
             .ToList();
@@ -192,10 +219,40 @@ public sealed class HotkeyEngine : IDisposable
         {
             _sequence = sequences;
             _sequenceIndex = 1;
-            _sequenceDeadline = now + SequenceTimeoutMs;
+            _sequenceHeldBack.Clear();
+            HoldBack(combo, now);
             return Swallow(combo, vk);
         }
         return false;
+    }
+
+    private void HoldBack(KeyCombo combo, long now)
+    {
+        _sequenceHeldBack.Add(combo);
+        _sequenceDeadline = now + SequenceTimeoutMs;
+        _sequenceTimer.Stop();
+        _sequenceTimer.Interval = TimeSpan.FromMilliseconds(SequenceTimeoutMs);
+        _sequenceTimer.Start();
+    }
+
+    /// <summary>The sequence didn't happen: type the keys that were held back while waiting for it.</summary>
+    private void ReplayHeldBackKeys()
+    {
+        _sequenceTimer.Stop();
+        _sequence.Clear();
+        if (_sequenceHeldBack.Count == 0)
+            return;
+        var held = InputSender.CurrentMods();
+        foreach (var combo in _sequenceHeldBack)
+        {
+            // Modifiers still physically down already apply; only press the ones that were let go.
+            if ((combo.Mods & ~held) == Mods.None)
+                InputSender.SendKey(combo.Vk);
+            else
+                InputSender.SendCombo(combo);
+        }
+        _sequenceHeldBack.Clear();
+        _replayedForThisKey = true;
     }
 
     /// <summary>Remembers a press and says whether it repeats the previous one quickly enough to be a double-tap.</summary>
@@ -237,26 +294,31 @@ public sealed class HotkeyEngine : IDisposable
         swallowed = false;
         if (now > _sequenceDeadline)
         {
-            _sequence.Clear();
+            ReplayHeldBackKeys();
             return false;
         }
         if (KeyCombo.IsModifierVk(vk))
             return true; // Modifiers for the next step: let them through and keep waiting.
 
         var matching = _sequence.Where(e => e.Trigger.Steps[_sequenceIndex] == combo).ToList();
-        _sequence.Clear();
         if (matching.Count == 0)
+        {
+            ReplayHeldBackKeys();
             return false;
+        }
 
         _sequenceIndex++;
         if (matching.FirstOrDefault(e => e.Trigger.Steps.Count == _sequenceIndex) is { } complete)
         {
+            _sequence.Clear();
+            _sequenceHeldBack.Clear();
+            _sequenceTimer.Stop();
             swallowed = Fire(complete.Binding, combo, vk);
             return true;
         }
 
         _sequence = matching;
-        _sequenceDeadline = now + SequenceTimeoutMs;
+        HoldBack(combo, now);
         swallowed = Swallow(combo, vk);
         return true;
     }
@@ -293,6 +355,8 @@ public sealed class HotkeyEngine : IDisposable
     private void ResetPending()
     {
         _sequence.Clear();
+        _sequenceHeldBack.Clear();
+        _sequenceTimer.Stop();
         _lastPress = _lastModifierPress = null;
         if (_hold is not null)
             CancelHold();

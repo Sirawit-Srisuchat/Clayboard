@@ -59,6 +59,19 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string ConfigPath => _store.FilePath;
     public string Language => Loc.Language;
 
+    public int SequenceTimeoutMs => _engine.SequenceTimeoutMs;
+
+    /// <summary>Sets how long sequences wait for their next step, clamped to a usable range, and saves it.</summary>
+    public int SetSequenceTimeout(int ms)
+    {
+        ms = Math.Clamp(ms, HotkeyEngine.MinSequenceTimeoutMs, HotkeyEngine.MaxSequenceTimeoutMs);
+        _config.SequenceTimeoutMs = ms;
+        _engine.SequenceTimeoutMs = ms;
+        if (!TrySave(out var error))
+            LoadError = error;
+        return ms;
+    }
+
     /// <summary>Switches the UI language and remembers it in config.json.</summary>
     public void SetLanguage(string code)
     {
@@ -289,6 +302,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 active[key] = item;
         }
 
+        _engine.SequenceTimeoutMs = Math.Clamp(_config.SequenceTimeoutMs ?? HotkeyEngine.DefaultSequenceTimeoutMs,
+            HotkeyEngine.MinSequenceTimeoutMs, HotkeyEngine.MaxSequenceTimeoutMs);
         _engine.SetBindings(active.Values.Select(item => (item.Trigger!, item.Model)));
         RaiseListState();
     }
