@@ -84,6 +84,10 @@
                     <TextBlock x:Name="ModeHint" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="2,8,0,0"
                                Visibility="Collapsed"/>
 
+                    <TextBlock x:Name="KeyWarning" Foreground="{StaticResource TerraBrush}" FontSize="12"
+                               TextWrapping="Wrap" Margin="2,8,0,0" Visibility="Collapsed"
+                               Text="{DynamicResource Ed.Warn.CommonKey}"/>
+
                     <StackPanel x:Name="HoldPanel" Orientation="Horizontal" Margin="2,10,0,0" Visibility="Collapsed">
                         <TextBlock Style="{StaticResource Muted}" Text="{DynamicResource Ed.HoldFor}"
                                    VerticalAlignment="Center"/>
@@ -163,6 +167,15 @@
                         <TextBox x:Name="ValueBox" Style="{StaticResource Field}" Tag="you@example.com"
                                  AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" MaxHeight="160"
                                  VerticalScrollBarVisibility="Auto"/>
+                        <DockPanel Margin="0,12,0,0">
+                            <ToggleButton x:Name="SecretSwitch" DockPanel.Dock="Right" Style="{StaticResource Switch}"
+                                          VerticalAlignment="Center"/>
+                            <StackPanel Margin="0,0,12,0">
+                                <TextBlock Text="{DynamicResource Ed.Secret}"/>
+                                <TextBlock Style="{StaticResource Muted}" Text="{DynamicResource Ed.SecretHint}"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </DockPanel>
                     </StackPanel>
 
                     <StackPanel x:Name="KeysPanel" Visibility="Collapsed">
@@ -268,7 +281,8 @@
 
                     <DockPanel Margin="0,18,0,0">
                         <ToggleButton x:Name="SuppressSwitch" DockPanel.Dock="Right" Style="{StaticResource Switch}"
-                                      VerticalAlignment="Center" IsChecked="True"/>
+                                      VerticalAlignment="Center" IsChecked="True" Checked="OnSuppressChanged"
+                                      Unchecked="OnSuppressChanged"/>
                         <StackPanel>
                             <TextBlock Text="{DynamicResource Ed.Block}" TextWrapping="Wrap"/>
                             <TextBlock Style="{StaticResource Muted}"

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
+using MacroInWZa007.Config;
 using MacroInWZa007.Core;
 using MacroInWZa007.Input;
 using MacroInWZa007.Localization;
@@ -43,6 +45,7 @@ public static class ActionRunner
         "run" => null,
         "close" when string.IsNullOrWhiteSpace(action.Process) => Loc.T("Err.CloseApp"),
         "close" => null,
+        "text" when action.Secret is not null => Secrets.TryUnprotect(action.Secret, out _) ? null : Loc.T("Err.SecretUnreadable"),
         "text" when string.IsNullOrEmpty(action.Value) => Loc.T("Err.TextValue"),
         "text" => null,
         "sendkeys" => KeyCombo.TryParse(action.Keys, out _, out var error) ? null : error,
@@ -73,6 +76,7 @@ public static class ActionRunner
         "run" when action.Toggle == true => Loc.F("Desc.Toggle", action.Path),
         "run" => Loc.F("Desc.Run", action.Path),
         "close" => Loc.F("Desc.Close", action.Process),
+        "text" when action.Secret is not null => Loc.T("Desc.TextSecret"),
         "text" => Loc.T("Desc.Text"),
         "sendkeys" => Loc.F("Desc.Keys", action.Keys),
         "media" => MediaCommands.ContainsKey(action.Command ?? "")
@@ -144,7 +148,7 @@ public static class ActionRunner
                 WindowCloser.Close(action.Process!); // Nothing open is fine: there's nothing to close.
                 break;
             case "text":
-                InputSender.SendText(action.Value!);
+                InputSender.SendText(TextOf(action));
                 break;
             case "sendkeys":
                 KeyCombo.TryParse(action.Keys, out var combo, out _);
@@ -189,12 +193,27 @@ public static class ActionRunner
         }
     }
 
-    private static Process? Start(ActionSpec action) =>
-        Process.Start(new ProcessStartInfo(Environment.ExpandEnvironmentVariables(action.Path!))
+    /// <summary>The text to type: the decrypted secret if there is one, otherwise the plain value.</summary>
+    public static string TextOf(ActionSpec action) =>
+        action.Secret is not null && Secrets.TryUnprotect(action.Secret, out var secret) ? secret : action.Value ?? "";
+
+    private static Process? Start(ActionSpec action)
+    {
+        var path = Environment.ExpandEnvironmentVariables(action.Path!);
+        if (!ShellLauncher.IsElevated)
+            return Process.Start(new ProcessStartInfo(path) { Arguments = action.Args ?? "", UseShellExecute = true });
+
+        // Running as admin: never pass that on to programs named in config.json.
+        try
         {
-            Arguments = action.Args ?? "",
-            UseShellExecute = true,
-        });
+            ShellLauncher.OpenAsUser(path, action.Args ?? "");
+            return null;
+        }
+        catch (Exception ex) when (ex is COMException or InvalidCastException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException)
+        {
+            throw new InvalidOperationException(Loc.F("Err.Unelevated", ex.Message), ex);
+        }
+    }
 
     private static string Normalize(string? type) => (type ?? "").Trim().ToLowerInvariant();
 }

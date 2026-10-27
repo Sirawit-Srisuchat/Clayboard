@@ -43,27 +43,18 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>Raised when the close button hides the window instead of exiting.</summary>
-    public event Action? HiddenToTray;
-
-    /// <summary>Set before shutdown so closing really closes.</summary>
-    public bool AllowClose { get; set; }
-
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
         WindowCorners.Round(this);
     }
 
-    protected override void OnClosing(CancelEventArgs e)
+    // The window really closes when sent to the tray (the app rebuilds it on demand), so let go of
+    // app-wide events or the closed window would stay in memory.
+    protected override void OnClosed(EventArgs e)
     {
-        if (!AllowClose)
-        {
-            e.Cancel = true;
-            Hide();
-            HiddenToTray?.Invoke();
-        }
-        base.OnClosing(e);
+        Loc.Changed -= UpdateMaximizedLayout;
+        base.OnClosed(e);
     }
 
     private void UpdateMaximizedLayout()
@@ -104,6 +95,8 @@ public partial class MainWindow : Window
     }
 
     private void OnShowAll(object sender, RoutedEventArgs e) => NavBindings.IsChecked = true;
+
+    private void OnAllowUntrusted(object sender, RoutedEventArgs e) => _viewModel.AllowUntrusted();
 
     private void OnStartupToggled(object sender, RoutedEventArgs e)
     {

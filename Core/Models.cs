@@ -56,6 +56,9 @@ public sealed class ActionSpec
     public List<ActionSpec>? Steps { get; set; }
     public int? Ms { get; set; }
 
+    /// <summary>For text: the text encrypted with DPAPI (see Config.Secrets), used instead of <see cref="Value"/>.</summary>
+    public string? Secret { get; set; }
+
     /// <summary>For run: when the program is already open, the same keys close it instead.</summary>
     public bool? Toggle { get; set; }
 

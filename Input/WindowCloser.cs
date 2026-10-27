@@ -35,11 +35,18 @@ public static class WindowCloser
     private static List<IntPtr> FindWindows(string app)
     {
         var name = ProcessNameOf(app);
+        // A full path ("C:\Tools\app.exe") pins one program; a bare name matches any exe called that.
+        var path = app.Trim().Trim('"');
+        bool byPath = path.Contains('\\');
         var pids = new HashSet<uint>();
         foreach (var process in Process.GetProcessesByName(name))
         {
             using (process)
-                pids.Add((uint)process.Id);
+            {
+                if (!byPath || string.Equals(ForegroundTracker.ImagePathOf((uint)process.Id), path,
+                        StringComparison.OrdinalIgnoreCase))
+                    pids.Add((uint)process.Id);
+            }
         }
         pids.Remove((uint)Environment.ProcessId); // Never close ourselves.
 

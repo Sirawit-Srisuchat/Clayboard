@@ -33,6 +33,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 {
     private readonly ConfigStore _store;
     private readonly HotkeyEngine _engine;
+    private readonly TrustStore _trust;
     private AppConfig _config = new();
     private string _searchText = "";
     private string? _loadError;
@@ -40,10 +41,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string? _profileKey;
     private string _profileName = "";
 
-    public MainViewModel(ConfigStore store, HotkeyEngine engine)
+    public MainViewModel(ConfigStore store, HotkeyEngine engine, TrustStore trust)
     {
         _store = store;
         _engine = engine;
+        _trust = trust;
         View = CollectionViewSource.GetDefaultView(Items);
         View.Filter = Matches;
         Loc.Changed += OnLanguageChanged;
@@ -60,6 +62,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string Language => Loc.Language;
 
     public int SequenceTimeoutMs => _engine.SequenceTimeoutMs;
+
+    public int UntrustedCount => Items.Count(i => !i.IsTrusted);
+    public bool HasUntrusted => UntrustedCount > 0;
+    public string TrustBanner => Loc.F("Trust.Banner", string.Join(", ", Items.Where(i => !i.IsTrusted).Select(i => i.Name)));
+
+    /// <summary>Approves every binding that was changed outside the app, so it can run.</summary>
+    public void AllowUntrusted()
+    {
+        _trust.Trust(Items.Where(i => !i.IsTrusted).Select(i => i.Model));
+        RebuildItems();
+    }
 
     /// <summary>Sets how long sequences wait for their next step, clamped to a usable range, and saves it.</summary>
     public int SetSequenceTimeout(int ms)
@@ -180,6 +193,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
 
+        // The app's own starter bindings are safe, and so is an existing AppData config the first time this
+        // check runs (an upgrade). A portable config.json has to be approved, since anyone may have put it there.
+        if (_store.CreatedStarter || (_trust.IsNew && !ConfigStore.IsPortable))
+            _trust.Trust(_config.Bindings);
+
         // Switching language rebuilds the list itself (subtitles and keycaps are translated).
         if (Loc.Resolve(_config.Language) != Loc.Language)
             Loc.Apply(_config.Language);
@@ -224,6 +242,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             _config.Bindings[index] = updated;
         else
             _config.Bindings.Add(updated);
+        _trust.Trust(new[] { updated }); // Made in the editor, so the user has seen it.
         RebuildItems();
         return TrySave(out error);
     }
@@ -251,7 +270,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         Items.Clear();
         foreach (var binding in _config.Bindings)
-            Items.Add(new BindingItem(binding, OnItemToggled));
+            Items.Add(new BindingItem(binding, OnItemToggled, _trust.IsTrusted(binding)));
         RebuildProfiles();
         ApplyBindings();
     }
@@ -276,6 +295,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         try
         {
             _store.Save(_config);
+            _trust.Prune(_config.Bindings);
             error = null;
             return true;
         }
@@ -293,7 +313,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         foreach (var item in Items)
         {
             item.Conflict = null;
-            if (!item.Enabled || !item.IsValid)
+            if (!item.Enabled || !item.IsValid || !item.IsTrusted)
                 continue;
             var key = (item.Trigger!.Id, item.AppKey);
             if (active.TryGetValue(key, out var first))
@@ -313,6 +333,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(Summary));
         OnPropertyChanged(nameof(IsEmpty));
         OnPropertyChanged(nameof(EmptyText));
+        OnPropertyChanged(nameof(HasUntrusted));
+        OnPropertyChanged(nameof(TrustBanner));
     }
 
     private bool InScope(BindingItem item) => _scope switch

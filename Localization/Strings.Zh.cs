@@ -195,6 +195,17 @@ internal static partial class Strings
         ["Desc.MacroN"] = "宏 · {0} 步",
         ["Desc.Wait"] = "等待 {0} ms",
         ["Cap.Then"] = "然后",
+        ["Trust.Banner"] = "在 Macro 之外被修改，允许前已暂停：{0}",
+        ["Trust.Allow"] = "允许",
+        ["Trust.ItemError"] = "在 Macro 之外被修改，已暂停。请在上方允许，或打开后重新保存。",
+        ["Ed.Secret"] = "将此文本设为机密",
+        ["Ed.SecretHint"] = "加密保存，只有这台电脑上你的 Windows 账户可以读取。",
+        ["Err.SecretUnreadable"] = "此机密文本是在其他电脑或账户上保存的。请重新输入。",
+        ["Desc.TextSecret"] = "文本 (机密)",
+        ["Ed.Warn.CommonKey"] = "启用期间，此键在其他应用中将无法使用。请添加 Ctrl、Alt 或 Win，或关闭拦截。",
+        ["Settings.Emergency"] = "紧急暂停",
+        ["Settings.EmergencyHint"] = "在任何地方按 Ctrl+Alt+Shift+Pause 可暂停或恢复所有快捷键。",
+        ["Err.Unelevated"] = "Macro 以管理员身份运行，因此通过资源管理器以非管理员身份打开程序，但失败了。{0}",
         ["Cap.Hold"] = "长按",
     };
 }

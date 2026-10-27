@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Microsoft.Win32;
 
 namespace MacroInWZa007.Config;
@@ -27,10 +28,18 @@ public static class StartupManager
             key.DeleteValue(ValueName, throwOnMissingValue: false);
     }
 
-    /// <summary>Points the entry at this exe again, in case the app was moved since it was turned on.</summary>
+    /// <summary>
+    /// Re-points the entry at this exe only when the registered one no longer exists (the app was moved).
+    /// Opening some other copy once, say from Downloads or a USB stick, must not take over startup.
+    /// </summary>
     public static void RefreshPath()
     {
-        if (IsEnabled)
+        using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath);
+        if (key?.GetValue(ValueName) is not string command)
+            return;
+        int closingQuote = command.StartsWith('"') ? command.IndexOf('"', 1) : -1;
+        var registered = closingQuote > 0 ? command[1..closingQuote] : command.Split(' ')[0];
+        if (!File.Exists(registered))
             SetEnabled(true);
     }
 }

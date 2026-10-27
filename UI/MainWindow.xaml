@@ -124,12 +124,26 @@
                         </StackPanel>
                     </DockPanel>
 
-                    <Border Grid.Row="1" Background="{StaticResource TerraSoftBrush}" CornerRadius="8"
-                            Padding="12,9" Margin="24,0,24,12"
-                            Visibility="{Binding HasLoadError, Converter={StaticResource BoolToVis}}">
-                        <TextBlock Text="{Binding LoadError}" Foreground="{StaticResource TerraBrush}"
-                                   TextWrapping="Wrap"/>
-                    </Border>
+                    <StackPanel Grid.Row="1">
+                        <Border Background="{StaticResource TerraSoftBrush}" CornerRadius="8"
+                                Padding="12,9" Margin="24,0,24,12"
+                                Visibility="{Binding HasLoadError, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="{Binding LoadError}" Foreground="{StaticResource TerraBrush}"
+                                       TextWrapping="Wrap"/>
+                        </Border>
+
+                        <Border Background="{StaticResource TerraSoftBrush}" CornerRadius="8"
+                                Padding="12,9" Margin="24,0,24,12"
+                                Visibility="{Binding HasUntrusted, Converter={StaticResource BoolToVis}}">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource PrimaryButton}" Padding="12,6"
+                                        Margin="12,0,0,0" VerticalAlignment="Center" Content="{DynamicResource Trust.Allow}"
+                                        Click="OnAllowUntrusted"/>
+                                <TextBlock Text="{Binding TrustBanner}" Foreground="{StaticResource TerraBrush}"
+                                           TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            </DockPanel>
+                        </Border>
+                    </StackPanel>
 
                     <TextBox Grid.Row="2" Style="{StaticResource SearchBox}" Tag="{DynamicResource List.Search}"
                              Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Margin="24,0,24,12"/>
@@ -299,6 +313,14 @@
                                            TextWrapping="Wrap"/>
                             </StackPanel>
                         </DockPanel>
+                    </Border>
+                    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="16,14" Margin="0,10,0,0">
+                        <StackPanel>
+                            <TextBlock Text="{DynamicResource Settings.Emergency}"/>
+                            <TextBlock Style="{StaticResource Muted}" Text="{DynamicResource Settings.EmergencyHint}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
                     </Border>
                     <TextBlock x:Name="SettingsError" Foreground="{StaticResource TerraBrush}" TextWrapping="Wrap"
                                Margin="0,12,0,0" Visibility="Collapsed"/>

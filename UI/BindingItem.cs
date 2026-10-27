@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using MacroInWZa007.Actions;
 using MacroInWZa007.Core;
 using MacroInWZa007.Input;
+using MacroInWZa007.Localization;
 
 namespace MacroInWZa007.UI;
 
@@ -16,9 +17,10 @@ public sealed class BindingItem : INotifyPropertyChanged
     private readonly string? _actionError;
     private string? _conflict;
 
-    public BindingItem(HotkeyBinding model, Action<BindingItem> onToggled)
+    public BindingItem(HotkeyBinding model, Action<BindingItem> onToggled, bool isTrusted)
     {
         Model = model;
+        IsTrusted = isTrusted;
         _onToggled = onToggled;
         KeyCaps = TriggerSpec.ToCaps(model.Trigger, model.Mode);
         AppKey = string.IsNullOrWhiteSpace(model.App) ? null : ForegroundTracker.Normalize(model.App);
@@ -32,6 +34,10 @@ public sealed class BindingItem : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public HotkeyBinding Model { get; }
+
+    /// <summary>False when the action was changed outside the app and hasn't been approved yet.</summary>
+    public bool IsTrusted { get; }
+
     public TriggerSpec? Trigger { get; }
 
     /// <summary>Normalized app name, or null for a global binding.</summary>
@@ -72,7 +78,7 @@ public sealed class BindingItem : INotifyPropertyChanged
     /// <summary>Errors that make the binding unusable no matter what else is configured.</summary>
     public bool IsValid => Trigger is not null && _actionError is null;
 
-    public string? Error => _triggerError ?? _actionError ?? _conflict;
+    public string? Error => _triggerError ?? _actionError ?? (IsTrusted ? null : Loc.T("Trust.ItemError")) ?? _conflict;
     public bool HasError => Error is not null;
 
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>

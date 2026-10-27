@@ -195,6 +195,17 @@ internal static partial class Strings
         ["Desc.MacroN"] = "Macro · {0} steps",
         ["Desc.Wait"] = "Wait {0} ms",
         ["Cap.Then"] = "then",
+        ["Trust.Banner"] = "Changed outside Macro and paused until you allow them: {0}",
+        ["Trust.Allow"] = "Allow",
+        ["Trust.ItemError"] = "Changed outside Macro, so it's paused. Allow it above, or open and save it.",
+        ["Ed.Secret"] = "Keep this text secret",
+        ["Ed.SecretHint"] = "Saved encrypted. Only your Windows account on this PC can read it.",
+        ["Err.SecretUnreadable"] = "This secret text was saved on another PC or account. Type it again.",
+        ["Desc.TextSecret"] = "Text (secret)",
+        ["Ed.Warn.CommonKey"] = "While this is on, the key stops working in every other app. Add Ctrl, Alt, or Win, or turn off blocking.",
+        ["Settings.Emergency"] = "Emergency pause",
+        ["Settings.EmergencyHint"] = "Press Ctrl+Alt+Shift+Pause anywhere to pause or resume every binding.",
+        ["Err.Unelevated"] = "Macro is running as admin, so it opens programs through Explorer without admin rights, and that failed. {0}",
         ["Cap.Hold"] = "hold",
     };
 }

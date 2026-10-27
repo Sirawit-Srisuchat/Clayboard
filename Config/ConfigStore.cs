@@ -58,11 +58,18 @@ public sealed class ConfigStore : IDisposable
     /// <summary>Raised on a worker thread after config.json is edited outside the app.</summary>
     public event Action? Changed;
 
+    /// <summary>True when the last <see cref="Load"/> wrote the built-in starter bindings.</summary>
+    public bool CreatedStarter { get; private set; }
+
+    /// <summary>JSON exactly as config.json writes it, for fingerprinting actions.</summary>
+    public static string Serialize(object value) => JsonSerializer.Serialize(value, JsonOptions);
+
     /// <summary>Reads the config, creating a starter file on first run.</summary>
     public AppConfig Load()
     {
         // An empty file is how a fresh portable copy asks for the starter bindings.
-        if (!File.Exists(FilePath) || new FileInfo(FilePath).Length == 0)
+        CreatedStarter = !File.Exists(FilePath) || new FileInfo(FilePath).Length == 0;
+        if (CreatedStarter)
         {
             var starter = CreateStarter();
             Save(starter);

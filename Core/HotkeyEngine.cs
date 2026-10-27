@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using MacroInWZa007.Actions;
@@ -16,7 +17,8 @@ public delegate void CaptureHandler(Mods mods, int vk, bool done);
 
 /// <summary>
 /// Matches key presses from the hook against bindings and fires their actions.
-/// Everything except action execution runs on the UI thread, which also runs the hook.
+/// The hook and all matching state live on a dedicated high-priority thread (see <see cref="Create"/>),
+/// so a busy UI never delays typing anywhere on the PC. Public members can be called from any thread.
 /// </summary>
 public sealed class HotkeyEngine : IDisposable
 {
@@ -35,12 +37,15 @@ public sealed class HotkeyEngine : IDisposable
         public bool Fired { get; set; }
     }
 
+    private readonly Dispatcher _dispatcher;
     private readonly KeyboardHook _hook;
     private readonly ForegroundTracker _foreground = new();
     private readonly DispatcherTimer _holdTimer = new();
 
-    // App-specific bindings come first so they win over global ones with the same keys.
-    private IReadOnlyList<Entry> _entries = Array.Empty<Entry>();
+    // Bindings by their first combo, so a key press is one lookup with no allocation.
+    // Within each list, app-specific bindings come first so they win over global ones.
+    private Dictionary<KeyCombo, Entry[]> _byFirstCombo = new();
+    private readonly List<Entry> _candidates = new();
 
     // Physical keys that are down, to tell auto-repeat apart from new presses.
     private readonly HashSet<int> _down = new();
@@ -79,57 +84,104 @@ public sealed class HotkeyEngine : IDisposable
 
     private volatile bool _paused;
 
-    public HotkeyEngine()
+    private HotkeyEngine()
     {
+        _dispatcher = Dispatcher.CurrentDispatcher;
         _hook = new KeyboardHook(OnKey);
         _holdTimer.Tick += (_, _) => OnHoldElapsed();
         _sequenceTimer.Tick += (_, _) => ReplayHeldBackKeys();
     }
 
+    /// <summary>Creates the engine on its own thread, which then runs the hook's message loop.</summary>
+    public static HotkeyEngine Create()
+    {
+        HotkeyEngine? engine = null;
+        using var ready = new ManualResetEventSlim();
+        var thread = new Thread(() =>
+        {
+            engine = new HotkeyEngine();
+            ready.Set();
+            Dispatcher.Run();
+        })
+        {
+            Name = "Keyboard hook",
+            IsBackground = true,
+            // Every keystroke on the PC waits for this thread, so it must never queue behind other work.
+            Priority = ThreadPriority.Highest,
+        };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        ready.Wait();
+        return engine!;
+    }
+
+    private volatile int _sequenceTimeoutMs = DefaultSequenceTimeoutMs;
+
     /// <summary>How long to wait for the next step of a sequence before typing the held-back keys.</summary>
-    public int SequenceTimeoutMs { get; set; } = DefaultSequenceTimeoutMs;
+    public int SequenceTimeoutMs
+    {
+        get => _sequenceTimeoutMs;
+        set => _sequenceTimeoutMs = value;
+    }
 
     public event Action<HotkeyBinding, Exception>? ActionFailed;
+
+    /// <summary>Raised on the hook thread when Ctrl+Alt+Shift+Pause is pressed: the emergency on/off switch.</summary>
+    public event Action? EmergencyToggle;
 
     public bool Paused
     {
         get => _paused;
-        set
+        set => OnHookThread(() =>
         {
             _paused = value;
             ResetPending();
-        }
+        });
     }
 
-    public void Start()
+    public void Start() => OnHookThread(() =>
     {
         _foreground.Start();
         _hook.Install();
-    }
+    });
 
-    /// <summary>Replaces the active bindings. Call on the UI thread.</summary>
+    /// <summary>Replaces the active bindings.</summary>
     public void SetBindings(IEnumerable<(TriggerSpec Trigger, HotkeyBinding Binding)> bindings)
     {
-        _entries = bindings
+        var lookup = bindings
             .Select(b => new Entry(b.Trigger, b.Binding,
                 string.IsNullOrWhiteSpace(b.Binding.App) ? null : ForegroundTracker.Normalize(b.Binding.App)))
-            .OrderBy(e => e.App is null)
-            .ToList();
-        ResetPending();
+            .GroupBy(e => e.Trigger.First)
+            .ToDictionary(g => g.Key, g => g.OrderBy(e => e.App is null).ToArray());
+        OnHookThread(() =>
+        {
+            _byFirstCombo = lookup;
+            ResetPending();
+        });
     }
 
     /// <summary>
     /// Routes all keys to <paramref name="handler"/> (and away from other apps) until the user
-    /// releases a full combo or <see cref="EndCapture"/> is called. Call on the UI thread.
+    /// releases a full combo or <see cref="EndCapture"/> is called. The handler runs on the hook thread.
     /// </summary>
-    public void BeginCapture(CaptureHandler handler)
+    public void BeginCapture(CaptureHandler handler) => OnHookThread(() =>
     {
-        EndCapture();
+        EndCaptureCore();
         ResetPending();
         _capture = handler;
+    });
+
+    public void EndCapture() => OnHookThread(EndCaptureCore);
+
+    private void OnHookThread(Action action)
+    {
+        if (_dispatcher.CheckAccess())
+            action();
+        else
+            _dispatcher.Invoke(action);
     }
 
-    public void EndCapture()
+    private void EndCaptureCore()
     {
         if (_capture is null)
             return;
@@ -144,10 +196,14 @@ public sealed class HotkeyEngine : IDisposable
 
     public void Dispose()
     {
-        _hook.Dispose();
-        _foreground.Dispose();
-        _holdTimer.Stop();
-        _sequenceTimer.Stop();
+        OnHookThread(() =>
+        {
+            _hook.Dispose();
+            _foreground.Dispose();
+            _holdTimer.Stop();
+            _sequenceTimer.Stop();
+        });
+        _dispatcher.InvokeShutdown();
     }
 
     private bool OnKey(int vk, bool isDown)
@@ -165,14 +221,23 @@ public sealed class HotkeyEngine : IDisposable
             return _hold.Swallowed;
         if (_heldKeys.TryGetValue(vk, out bool repeatSwallowed))
             return repeatSwallowed;
-        if (isRepeat || _paused)
+        if (isRepeat)
+            return false;
+
+        var combo = ComboFor(vk);
+        if (IsEmergencyToggle(combo))
+        {
+            // Works even while paused, so a binding that eats important keys can always be switched off.
+            EmergencyToggle?.Invoke();
+            return Remember(vk, true);
+        }
+        if (_paused)
             return false;
 
         // Pressing anything else means the user isn't just holding a key.
         if (_hold is not null)
             CancelHold();
 
-        var combo = ComboFor(vk);
         long now = Environment.TickCount64;
         string app = _foreground.CurrentApp;
 
@@ -191,30 +256,39 @@ public sealed class HotkeyEngine : IDisposable
         return swallowFresh;
     }
 
+    // Ctrl+Pause arrives as VK_CANCEL (Break) on most keyboards, so accept either.
+    private static bool IsEmergencyToggle(KeyCombo combo) =>
+        combo.Mods == (Mods.Ctrl | Mods.Alt | Mods.Shift) && combo.Vk is 0x13 or 0x03;
+
     private bool HandleFreshPress(KeyCombo combo, int vk, long now, string app)
     {
-        var candidates = _entries
-            .Where(e => e.Trigger.First == combo && (e.App is null || e.App == app))
-            .ToList();
-
         bool isDoubleTap = RecordPress(combo, vk, now);
-        if (isDoubleTap && candidates.FirstOrDefault(e => e.Trigger.Mode == TriggerMode.DoubleTap) is { } doubleTap)
+        if (!_byFirstCombo.TryGetValue(combo, out var entries))
+            return false;
+
+        // Most presses match nothing and return above; the rest pick by mode without allocating.
+        _candidates.Clear();
+        foreach (var entry in entries)
+            if (entry.App is null || entry.App == app)
+                _candidates.Add(entry);
+
+        if (isDoubleTap && Find(TriggerMode.DoubleTap, sequence: false) is { } doubleTap)
         {
             // A third tap starts over instead of firing again.
             _lastPress = _lastModifierPress = null;
             return Fire(doubleTap.Binding, combo, vk);
         }
 
-        if (candidates.FirstOrDefault(e => e.Trigger.Mode == TriggerMode.Hold) is { } hold)
+        if (Find(TriggerMode.Hold, sequence: false) is { } hold)
         {
             StartHold(hold, vk);
             return _hold!.Swallowed;
         }
 
-        if (candidates.FirstOrDefault(e => e.Trigger.Mode == TriggerMode.Press && !e.Trigger.IsSequence) is { } press)
+        if (Find(TriggerMode.Press, sequence: false) is { } press)
             return Fire(press.Binding, combo, vk);
 
-        var sequences = candidates.Where(e => e.Trigger.Mode == TriggerMode.Press && e.Trigger.IsSequence).ToList();
+        var sequences = _candidates.Where(e => e.Trigger.Mode == TriggerMode.Press && e.Trigger.IsSequence).ToList();
         if (sequences.Count > 0)
         {
             _sequence = sequences;
@@ -224,6 +298,14 @@ public sealed class HotkeyEngine : IDisposable
             return Swallow(combo, vk);
         }
         return false;
+    }
+
+    private Entry? Find(TriggerMode mode, bool sequence)
+    {
+        foreach (var entry in _candidates)
+            if (entry.Trigger.Mode == mode && entry.Trigger.IsSequence == sequence)
+                return entry;
+        return null;
     }
 
     private void HoldBack(KeyCombo combo, long now)
@@ -425,7 +507,7 @@ public sealed class HotkeyEngine : IDisposable
             {
                 // Only modifiers were pressed: record the last one as the key, e.g. "Shift" for a double-tap.
                 var (mods, mainVk) = (_capturePeakMods & ~_captureLastMod, KeyCombo.GenericVk(_captureLastMod));
-                EndCapture();
+                EndCaptureCore();
                 handler(mods, mainVk, true);
             }
             else
@@ -436,7 +518,7 @@ public sealed class HotkeyEngine : IDisposable
         else if (_captureHeld.Count == 0)
         {
             var (mods, mainVk) = (_captureMods, _captureVk);
-            EndCapture();
+            EndCaptureCore();
             handler(mods, mainVk, true);
         }
         return true;

@@ -194,6 +194,17 @@ internal static partial class Strings
         ["Desc.MacroN"] = "มาโคร · {0} ขั้น",
         ["Desc.Wait"] = "รอ {0} ms",
         ["Cap.Then"] = "แล้ว",
+        ["Trust.Banner"] = "ถูกแก้จากนอกแอป จึงหยุดไว้จนกว่าจะอนุญาต: {0}",
+        ["Trust.Allow"] = "อนุญาต",
+        ["Trust.ItemError"] = "ถูกแก้จากนอกแอป จึงหยุดไว้ก่อน กดอนุญาตด้านบน หรือเปิดแล้วบันทึกใหม่",
+        ["Ed.Secret"] = "เก็บข้อความนี้เป็นความลับ",
+        ["Ed.SecretHint"] = "บันทึกแบบเข้ารหัส อ่านได้เฉพาะบัญชี Windows ของคุณบนเครื่องนี้",
+        ["Err.SecretUnreadable"] = "ข้อความลับนี้บันทึกจากเครื่องหรือบัญชีอื่น พิมพ์ใหม่อีกครั้ง",
+        ["Desc.TextSecret"] = "ข้อความ (ลับ)",
+        ["Ed.Warn.CommonKey"] = "ระหว่างที่เปิดใช้ ปุ่มนี้จะใช้ในแอปอื่นไม่ได้ เพิ่ม Ctrl, Alt หรือ Win หรือปิดการบล็อกปุ่ม",
+        ["Settings.Emergency"] = "หยุดฉุกเฉิน",
+        ["Settings.EmergencyHint"] = "กด Ctrl+Alt+Shift+Pause ที่ไหนก็ได้ เพื่อหยุดหรือเปิดปุ่มลัดทั้งหมด",
+        ["Err.Unelevated"] = "Macro รันแบบ admin จึงเปิดโปรแกรมผ่าน Explorer แบบไม่มีสิทธิ์ admin แต่เปิดไม่สำเร็จ {0}",
         ["Cap.Hold"] = "ค้าง",
     };
 }

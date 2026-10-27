@@ -194,6 +194,17 @@ internal static partial class Strings
         ["Desc.MacroN"] = "マクロ · {0} ステップ",
         ["Desc.Wait"] = "{0} ms 待機",
         ["Cap.Then"] = "次に",
+        ["Trust.Banner"] = "Macro の外で変更されたため、許可するまで停止しています: {0}",
+        ["Trust.Allow"] = "許可",
+        ["Trust.ItemError"] = "Macro の外で変更されたため停止中です。上で許可するか、開いて保存してください。",
+        ["Ed.Secret"] = "このテキストを秘密にする",
+        ["Ed.SecretHint"] = "暗号化して保存します。この PC のあなたの Windows アカウントだけが読み取れます。",
+        ["Err.SecretUnreadable"] = "この秘密のテキストは別の PC またはアカウントで保存されました。もう一度入力してください。",
+        ["Desc.TextSecret"] = "テキスト (秘密)",
+        ["Ed.Warn.CommonKey"] = "オンの間、このキーは他のアプリで使えなくなります。Ctrl、Alt、Win を追加するか、ブロックをオフにしてください。",
+        ["Settings.Emergency"] = "緊急停止",
+        ["Settings.EmergencyHint"] = "どこでも Ctrl+Alt+Shift+Pause を押すと、すべてのホットキーを一時停止または再開します。",
+        ["Err.Unelevated"] = "Macro は管理者として実行中のため、Explorer 経由で管理者権限なしにプログラムを開こうとしましたが、失敗しました。{0}",
         ["Cap.Hold"] = "長押し",
     };
 }

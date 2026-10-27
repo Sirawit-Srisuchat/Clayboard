@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace MacroInWZa007.Input;
 
@@ -57,16 +59,40 @@ public sealed class ForegroundTracker : IDisposable
     private void Update(IntPtr hwnd)
     {
         GetWindowThreadProcessId(hwnd, out uint pid);
+        _currentApp = Normalize(Path.GetFileName(ImagePathOf(pid) ?? ""));
+    }
+
+    /// <summary>
+    /// Full exe path of a process, or null if it exited or is off limits. One cheap kernel call,
+    /// unlike <see cref="Process"/>, which gathers details about every process to answer.
+    /// </summary>
+    public static string? ImagePathOf(uint pid)
+    {
+        var handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+        if (handle == IntPtr.Zero)
+            return null;
         try
         {
-            using var process = Process.GetProcessById((int)pid);
-            _currentApp = Normalize(process.ProcessName);
+            var buffer = new StringBuilder(1024);
+            int size = buffer.Capacity;
+            return QueryFullProcessImageName(handle, 0, buffer, ref size) ? buffer.ToString(0, size) : null;
         }
-        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        finally
         {
-            _currentApp = ""; // The process already exited.
+            CloseHandle(handle);
         }
     }
+
+    private const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr OpenProcess(uint access, bool inheritHandle, uint processId);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool QueryFullProcessImageName(IntPtr process, uint flags, StringBuilder name, ref int size);
+
+    [DllImport("kernel32.dll")]
+    private static extern bool CloseHandle(IntPtr handle);
 
     [DllImport("user32.dll")]
     private static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax, IntPtr hmodWinEventProc,

@@ -10,6 +10,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using MacroInWZa007.Actions;
+using MacroInWZa007.Config;
 using MacroInWZa007.Core;
 using MacroInWZa007.Localization;
 using Microsoft.Win32;
@@ -47,6 +48,7 @@ public partial class BindingEditorWindow : Window
         DeleteButton.Visibility = original is null ? Visibility.Collapsed : Visibility.Visible;
         Load(original ?? draft ?? new HotkeyBinding());
         _loading = false;
+        UpdateKeyWarning();
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -87,7 +89,8 @@ public partial class BindingEditorWindow : Window
         ToggleCloseSwitch.IsChecked = action.Toggle == true;
         ToggleProcessBox.Text = action.Type.Equals("run", StringComparison.OrdinalIgnoreCase) ? action.Process ?? "" : "";
         CloseProcessBox.Text = action.Type.Equals("close", StringComparison.OrdinalIgnoreCase) ? action.Process ?? "" : "";
-        ValueBox.Text = (action.Value ?? "").Replace("\n", Environment.NewLine);
+        ValueBox.Text = ActionRunner.TextOf(action).Replace("\n", Environment.NewLine);
+        SecretSwitch.IsChecked = action.Secret is not null;
         KeysRecorder.Keys = action.Keys ?? "";
         if (action.Command is not null)
             Check(MediaChips, action.Command);
@@ -134,6 +137,8 @@ public partial class BindingEditorWindow : Window
                 Process = ToggleCloseSwitch.IsChecked == true ? NullIfBlank(ToggleProcessBox.Text) : null,
             },
             "close" => new ActionSpec { Type = type, Process = NullIfBlank(CloseProcessBox.Text) },
+            "text" when SecretSwitch.IsChecked == true =>
+                new ActionSpec { Type = type, Secret = Secrets.Protect(ValueBox.Text.Replace("\r\n", "\n")) },
             "text" => new ActionSpec { Type = type, Value = ValueBox.Text.Replace("\r\n", "\n") },
             "sendKeys" => new ActionSpec { Type = type, Keys = KeysRecorder.Keys },
             "macro" => new ActionSpec { Type = type, Steps = _steps.Select(s => s.ToSpec()).ToList() },
@@ -254,6 +259,7 @@ public partial class BindingEditorWindow : Window
     private void OnTriggerChanged()
     {
         HideError();
+        UpdateKeyWarning();
         var binding = Build();
         if (TriggerSpec.TryParse(binding, out var trigger, out _)
             && _viewModel.FindConflict(trigger!, binding.App, _original) is { } other)
@@ -276,6 +282,7 @@ public partial class BindingEditorWindow : Window
             TriggerRecorder.Keys = TriggerSpec.SplitSteps(TriggerRecorder.Keys)[0];
 
         SetShown(HoldPanel, mode == "hold");
+        UpdateKeyWarning();
         if (mode is "doubleTap" or "hold" or "sequence")
         {
             ModeHint.SetResourceReference(TextBlock.TextProperty, mode switch
@@ -294,6 +301,27 @@ public partial class BindingEditorWindow : Window
         }
         HideError();
     }
+
+    private void OnSuppressChanged(object sender, RoutedEventArgs e) => UpdateKeyWarning();
+
+    /// <summary>
+    /// Warns when a blocked binding would take over an everyday key (a letter, Enter, Space…)
+    /// in every app. It's allowed, but easy to do by accident.
+    /// </summary>
+    private void UpdateKeyWarning()
+    {
+        if (_loading || KeyWarning is null)
+            return;
+        bool warn = CheckedTag(ModeChips) == "press" && SuppressSwitch.IsChecked == true
+            && KeyCombo.TryParse(TriggerRecorder.Keys, out var combo, out _)
+            && (combo.Mods & (Mods.Ctrl | Mods.Alt | Mods.Win)) == 0
+            && !IsSpareKey(combo.Vk);
+        SetShown(KeyWarning, warn);
+    }
+
+    // Keys most apps leave alone: F1–F24, browser and media keys, Pause, Scroll Lock, Print Screen.
+    private static bool IsSpareKey(int vk) =>
+        vk is (>= 0x70 and <= 0x87) or (>= 0xA6 and <= 0xB7) or 0x13 or 0x91 or 0x2C;
 
     private void OnModeBarSizeChanged(object sender, SizeChangedEventArgs e) => MoveModeThumb(animate: false);
 

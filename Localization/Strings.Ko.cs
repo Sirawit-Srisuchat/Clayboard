@@ -194,6 +194,17 @@ internal static partial class Strings
         ["Desc.MacroN"] = "매크로 · {0}단계",
         ["Desc.Wait"] = "{0} ms 대기",
         ["Cap.Then"] = "다음",
+        ["Trust.Banner"] = "Macro 밖에서 변경되어 허용할 때까지 중지됨: {0}",
+        ["Trust.Allow"] = "허용",
+        ["Trust.ItemError"] = "Macro 밖에서 변경되어 중지되었습니다. 위에서 허용하거나 열어서 저장하세요.",
+        ["Ed.Secret"] = "이 텍스트를 비밀로 보관",
+        ["Ed.SecretHint"] = "암호화해서 저장합니다. 이 PC의 내 Windows 계정만 읽을 수 있습니다.",
+        ["Err.SecretUnreadable"] = "이 비밀 텍스트는 다른 PC나 계정에서 저장되었습니다. 다시 입력하세요.",
+        ["Desc.TextSecret"] = "텍스트 (비밀)",
+        ["Ed.Warn.CommonKey"] = "켜져 있는 동안 이 키는 다른 앱에서 작동하지 않습니다. Ctrl, Alt, Win을 추가하거나 차단을 끄세요.",
+        ["Settings.Emergency"] = "긴급 일시 중지",
+        ["Settings.EmergencyHint"] = "어디서든 Ctrl+Alt+Shift+Pause를 누르면 모든 단축키를 일시 중지하거나 재개합니다.",
+        ["Err.Unelevated"] = "Macro가 관리자 권한으로 실행 중이라 Explorer를 통해 관리자 권한 없이 프로그램을 열려고 했지만 실패했습니다. {0}",
         ["Cap.Hold"] = "길게",
     };
 }
