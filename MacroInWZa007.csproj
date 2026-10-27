@@ -15,6 +15,8 @@
   <ItemGroup>
     <!-- Same icon for the tray and window, so they match the exe -->
     <EmbeddedResource Include="Assets\app.ico" LogicalName="app.ico"/>
+    <!-- Bundled so every PC shows the same typefaces (all SIL Open Font License, see Assets/Fonts/*-OFL.txt) -->
+    <Resource Include="Assets\Fonts\*.ttf"/>
   </ItemGroup>
 
 </Project>

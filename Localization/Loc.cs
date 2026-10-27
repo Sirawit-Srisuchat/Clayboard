@@ -77,14 +77,17 @@ public static class Loc
         Changed?.Invoke();
     }
 
-    // Inter has no Thai or CJK glyphs; name a Windows font for the script so Han characters
-    // get the right regional shapes instead of whatever WPF falls back to.
+    private const string Bundled = "pack://application:,,,/Assets/Fonts/#";
+
+    // Inter (bundled) covers Latin and Cyrillic. Thai uses the bundled IBM Plex Sans Thai Looped, whose
+    // looped letterforms stay easy to tell apart in long use. CJK falls to a Windows font for the script,
+    // so Han characters get the right regional shapes instead of whatever WPF picks.
     private static string FontFor(string language) => language switch
     {
-        "th" => "Inter, Leelawadee UI, Segoe UI",
-        "ja" => "Inter, Yu Gothic UI, Meiryo UI, Segoe UI",
-        "ko" => "Inter, Malgun Gothic, Segoe UI",
-        "zh" => "Inter, Microsoft YaHei UI, Segoe UI",
-        _ => "Inter, Segoe UI Variable Text, Segoe UI",
+        "th" => $"{Bundled}Inter, {Bundled}IBM Plex Sans Thai Looped, Leelawadee UI",
+        "ja" => $"{Bundled}Inter, Yu Gothic UI, Meiryo UI, Segoe UI",
+        "ko" => $"{Bundled}Inter, Malgun Gothic, Segoe UI",
+        "zh" => $"{Bundled}Inter, Microsoft YaHei UI, Segoe UI",
+        _ => $"{Bundled}Inter, {Bundled}IBM Plex Sans Thai Looped, Segoe UI",
     };
 }
