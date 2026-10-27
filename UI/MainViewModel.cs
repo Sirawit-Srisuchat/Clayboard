@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using System.Windows.Data;
 using Clayboard.Config;
 using Clayboard.Core;
 using Clayboard.Input;
@@ -29,7 +28,7 @@ public sealed record ProfileSummary(string? AppKey, string Name, int Count)
     public string Hint => Loc.T(AppKey is null ? "Profiles.GlobalHint" : "Profiles.AppHint");
 }
 
-public sealed class MainViewModel : INotifyPropertyChanged
+public sealed partial class MainViewModel : INotifyPropertyChanged
 {
     private readonly ConfigStore _store;
     private readonly HotkeyEngine _engine;
@@ -46,8 +45,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _store = store;
         _engine = engine;
         _trust = trust;
-        View = CollectionViewSource.GetDefaultView(Items);
-        View.Filter = Matches;
         Loc.Changed += OnLanguageChanged;
     }
 
@@ -56,7 +53,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public ObservableCollection<BindingItem> Items { get; } = new();
     public ObservableCollection<ProfileSummary> Profiles { get; } = new();
-    public ICollectionView View { get; }
     public HotkeyEngine Engine => _engine;
     public string ConfigPath => _store.FilePath;
     public string Language => Loc.Language;
@@ -70,7 +66,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     /// <summary>Saves every binding to <paramref name="path"/>. Returns how many were written.</summary>
     public int ExportBindings(string path)
     {
-        ConfigStore.WriteBindingsFile(path, _config.Bindings);
+        ConfigStore.WriteBindingsFile(path, _config.Bindings, _config.Groups);
         return _config.Bindings.Count;
     }
 
@@ -80,7 +76,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     /// outside the app, so a shared file can't run anything the user hasn't looked at.
     /// </summary>
     /// <returns>How many were added, and the backup file when <paramref name="replace"/> made one.</returns>
-    public (int Added, string? BackupPath) ImportBindings(IReadOnlyList<HotkeyBinding> bindings, bool replace)
+    public (int Added, string? BackupPath) ImportBindings(IReadOnlyList<HotkeyBinding> bindings,
+        IReadOnlyList<string> groups, bool replace)
     {
         string? backupPath = null;
         if (replace)
@@ -88,9 +85,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
             var folder = Path.Combine(ConfigStore.AppDataFolder, "backups");
             Directory.CreateDirectory(folder);
             backupPath = Path.Combine(folder, $"bindings-{DateTime.Now:yyyyMMdd-HHmmss}.json");
-            ConfigStore.WriteBindingsFile(backupPath, _config.Bindings);
+            ConfigStore.WriteBindingsFile(backupPath, _config.Bindings, _config.Groups);
             _config.Bindings.Clear();
+            _config.Groups.Clear();
         }
+        _config.Groups.AddRange(groups); // Duplicates are dropped by NormalizeGroups below.
 
         var existing = _config.Bindings.Select(IdentityOf).ToHashSet();
         int added = 0;
@@ -103,6 +102,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             }
         }
 
+        NormalizeGroups();
         RebuildItems();
         if (!TrySave(out var error))
             LoadError = error;
@@ -148,9 +148,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         set
         {
             _searchText = value;
-            View.Refresh();
             OnPropertyChanged();
-            RaiseListState();
+            RebuildRows();
         }
     }
 
@@ -198,7 +197,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    public bool IsEmpty => View.IsEmpty;
+    public bool IsEmpty => Rows.Count == 0;
 
     public string EmptyText
     {
@@ -243,6 +242,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         // check runs (an upgrade). A portable config.json has to be approved, since anyone may have put it there.
         if (_store.CreatedStarter || (_trust.IsNew && !ConfigStore.IsPortable))
             _trust.Trust(_config.Bindings);
+        NormalizeGroups();
 
         // Switching language rebuilds the list itself (subtitles and keycaps are translated).
         if (Loc.Resolve(_config.Language) != Loc.Language)
@@ -289,6 +289,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         else
             _config.Bindings.Add(updated);
         _trust.Trust(new[] { updated }); // Made in the editor, so the user has seen it.
+        NormalizeGroups();
         RebuildItems();
         return TrySave(out error);
     }
@@ -305,11 +306,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _scope = scope;
         _profileKey = profileKey;
         _profileName = profileName;
-        View.Refresh();
         OnPropertyChanged(nameof(Scope));
         OnPropertyChanged(nameof(IsProfileScope));
         OnPropertyChanged(nameof(PageTitle));
-        RaiseListState();
+        RebuildRows();
     }
 
     private void RebuildItems()
@@ -319,6 +319,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             Items.Add(new BindingItem(binding, OnItemToggled, _trust.IsTrusted(binding)));
         RebuildProfiles();
         ApplyBindings();
+        RebuildRows();
     }
 
     private void RebuildProfiles()
@@ -332,6 +333,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private void OnItemToggled(BindingItem item)
     {
         ApplyBindings();
+        SaveOrReport();
+        if (ShowMode is "on" or "off")
+            RebuildRows(); // The row may no longer belong in the filtered list.
+    }
+
+    private void SaveOrReport()
+    {
         if (!TrySave(out var error))
             LoadError = error;
     }
@@ -381,6 +389,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(EmptyText));
         OnPropertyChanged(nameof(HasUntrusted));
         OnPropertyChanged(nameof(TrustBanner));
+        OnPropertyChanged(nameof(CanReorder));
+        OnPropertyChanged(nameof(ShowReorderHint));
+        OnPropertyChanged(nameof(SortLabel));
+        OnPropertyChanged(nameof(ShowLabel));
     }
 
     private bool InScope(BindingItem item) => _scope switch
@@ -390,10 +402,18 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _ => true,
     };
 
-    private bool Matches(object obj)
+    private bool Matches(BindingItem item)
     {
-        var item = (BindingItem)obj;
         if (!InScope(item))
+            return false;
+        bool shown = ShowMode switch
+        {
+            "on" => item.Enabled,
+            "off" => !item.Enabled,
+            "problems" => item.HasError,
+            _ => true,
+        };
+        if (!shown)
             return false;
         if (string.IsNullOrWhiteSpace(_searchText))
             return true;

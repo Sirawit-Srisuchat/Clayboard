@@ -11,6 +11,18 @@ public sealed class AppConfig
     /// <summary>How long a sequence waits for its next step, in milliseconds; null means the default.</summary>
     public int? SequenceTimeoutMs { get; set; }
 
+    /// <summary>Group names in display order. The order of <see cref="Bindings"/> is the order within each group.</summary>
+    public List<string> Groups { get; set; } = new();
+
+    /// <summary>Groups shown folded up in the list.</summary>
+    public List<string> CollapsedGroups { get; set; } = new();
+
+    /// <summary>List order: null or "manual" (the user's own), "name", "nameDesc", "keys", or "type".</summary>
+    public string? Sort { get; set; }
+
+    /// <summary>Which bindings the list shows: null or "all", "on", "off", or "problems".</summary>
+    public string? Show { get; set; }
+
     public List<HotkeyBinding> Bindings { get; set; } = new();
 }
 
@@ -20,6 +32,10 @@ public sealed class BindingsFile
     public string Format { get; set; } = "clayboard-bindings";
     public int Version { get; set; } = 1;
     public DateTime ExportedAt { get; set; } = DateTime.Now;
+
+    /// <summary>Group order, so an import keeps the groups in the same order.</summary>
+    public List<string> Groups { get; set; } = new();
+
     public List<HotkeyBinding> Bindings { get; set; } = new();
 }
 
@@ -41,6 +57,9 @@ public sealed class HotkeyBinding
 
     /// <summary>Process name such as "chrome.exe"; the binding then only works while that app is in front.</summary>
     public string? App { get; set; }
+
+    /// <summary>Name of the group the binding is filed under in the list; null for none. Doesn't affect behavior.</summary>
+    public string? Group { get; set; }
 
     public bool Enabled { get; set; } = true;
 

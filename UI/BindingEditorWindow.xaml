@@ -104,6 +104,13 @@
                         <TextBox x:Name="AppBox" Style="{StaticResource Field}" Tag="{DynamicResource Ed.EveryApp}"/>
                     </DockPanel>
 
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.Group}"/>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="{DynamicResource Ed.Choose}"
+                                Padding="12,7" Margin="8,0,0,0" Click="OnChooseGroup"/>
+                        <TextBox x:Name="GroupBox" Style="{StaticResource Field}" Tag="{DynamicResource Group.None}"/>
+                    </DockPanel>
+
                     <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.Action}"/>
                     <WrapPanel x:Name="ActionChips">
                         <RadioButton Style="{StaticResource Chip}" GroupName="ActionType" Tag="run" Content="{DynamicResource Act.Run}"

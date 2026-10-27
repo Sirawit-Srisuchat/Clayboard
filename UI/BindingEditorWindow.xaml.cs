@@ -80,6 +80,7 @@ public partial class BindingEditorWindow : Window
         HoldBox.Text = binding.HoldMs?.ToString() ?? "";
         NameBox.Text = binding.Name;
         AppBox.Text = binding.App ?? "";
+        GroupBox.Text = binding.Group ?? "";
         SuppressSwitch.IsChecked = binding.Suppress;
 
         var action = binding.Action;
@@ -117,6 +118,7 @@ public partial class BindingEditorWindow : Window
             Mode = mode is "doubleTap" or "hold" ? mode : null,
             HoldMs = holdMs,
             App = string.IsNullOrWhiteSpace(AppBox.Text) ? null : AppBox.Text.Trim(),
+            Group = NullIfBlank(GroupBox.Text), // A new name becomes a new group when saved.
             Enabled = _original?.Enabled ?? true,
             Suppress = SuppressSwitch.IsChecked == true,
             Action = BuildAction(),
@@ -435,6 +437,21 @@ public partial class BindingEditorWindow : Window
         {
             var item = new MenuItem { Header = name };
             item.Click += (_, _) => box.Text = name;
+            menu.Items.Add(item);
+        }
+        menu.IsOpen = true;
+    }
+
+    private void OnChooseGroup(object sender, RoutedEventArgs e)
+    {
+        var menu = new ContextMenu { PlacementTarget = (UIElement)sender };
+        var none = new MenuItem { Header = Loc.T("Group.None") };
+        none.Click += (_, _) => GroupBox.Text = "";
+        menu.Items.Add(none);
+        foreach (var group in _viewModel.Groups)
+        {
+            var item = new MenuItem { Header = group };
+            item.Click += (_, _) => GroupBox.Text = group;
             menu.Items.Add(item);
         }
         menu.IsOpen = true;

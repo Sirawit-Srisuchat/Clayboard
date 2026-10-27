@@ -17,6 +17,45 @@ public abstract class Observable : INotifyPropertyChanged
         field = value;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
+
+    protected void Raise(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+}
+
+/// <summary>A group's title row in the bindings list. Its <see cref="Name"/> is null for bindings in no group.</summary>
+public sealed class GroupHeader : Observable
+{
+    private int _count;
+    private bool _isCollapsed;
+
+    public GroupHeader(string? name)
+    {
+        Name = name;
+    }
+
+    public string? Name { get; }
+    public bool IsNamed => Name is not null;
+    public string Display => Name ?? Loc.T("Group.None");
+
+    public int Count
+    {
+        get => _count;
+        set => Set(ref _count, value);
+    }
+
+    public bool IsCollapsed
+    {
+        get => _isCollapsed;
+        set
+        {
+            Set(ref _isCollapsed, value);
+            Raise(nameof(Chevron));
+        }
+    }
+
+    /// <summary>Segoe Fluent chevron: right when folded, down when open.</summary>
+    public string Chevron => IsCollapsed ? "" : "";
+
+    public void RefreshText() => Raise(nameof(Display));
 }
 
 /// <summary>One editable step of a macro.</summary>

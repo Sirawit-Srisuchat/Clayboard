@@ -5,7 +5,7 @@ using System.Security.Principal;
 namespace Clayboard.Input;
 
 /// <summary>
-/// Starts programs without admin rights even when Macro itself runs as admin, by asking the
+/// Starts programs without admin rights even when Clayboard itself runs as admin, by asking the
 /// desktop's Explorer (which runs as the normal user) to open them. Otherwise anything able to
 /// edit config.json could get its programs run as admin through us.
 /// </summary>

@@ -83,9 +83,9 @@ public sealed class ConfigStore : IDisposable
     private const long MaxImportBytes = 2 * 1024 * 1024;
 
     /// <summary>Writes bindings to an export file.</summary>
-    public static void WriteBindingsFile(string path, IEnumerable<HotkeyBinding> bindings)
+    public static void WriteBindingsFile(string path, IEnumerable<HotkeyBinding> bindings, IEnumerable<string>? groups = null)
     {
-        var file = new BindingsFile { Bindings = bindings.ToList() };
+        var file = new BindingsFile { Bindings = bindings.ToList(), Groups = groups?.ToList() ?? new() };
         File.WriteAllText(path, JsonSerializer.Serialize(file, JsonOptions));
     }
 
@@ -93,12 +93,16 @@ public sealed class ConfigStore : IDisposable
     /// Reads the bindings from an export file, or from a config.json, which has the same "bindings" list.
     /// Throws <see cref="JsonException"/> or <see cref="IOException"/> when the file can't be used.
     /// </summary>
-    public static List<HotkeyBinding> ReadBindingsFile(string path)
+    public static List<HotkeyBinding> ReadBindingsFile(string path) => ReadBindingsFile(path, out _);
+
+    /// <inheritdoc cref="ReadBindingsFile(string)"/>
+    public static List<HotkeyBinding> ReadBindingsFile(string path, out List<string> groups)
     {
         if (new FileInfo(path).Length > MaxImportBytes)
             throw new IOException("The file is too large to be a bindings file.");
         var file = JsonSerializer.Deserialize<BindingsFile>(File.ReadAllText(path), JsonOptions)
                    ?? throw new JsonException("The file is empty.");
+        groups = file.Groups ?? new();
         var bindings = (file.Bindings ?? new()).Where(b => b is not null).ToList();
         foreach (var binding in bindings)
             binding.Action ??= new ActionSpec();
@@ -122,6 +126,8 @@ public sealed class ConfigStore : IDisposable
 
         var config = JsonSerializer.Deserialize<AppConfig>(File.ReadAllText(FilePath), JsonOptions) ?? new AppConfig();
         config.Bindings ??= new();
+        config.Groups ??= new();
+        config.CollapsedGroups ??= new();
         foreach (var binding in config.Bindings)
             binding.Action ??= new ActionSpec();
         return config;
