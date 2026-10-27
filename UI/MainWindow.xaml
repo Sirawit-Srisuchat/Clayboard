@@ -182,8 +182,8 @@
                                 <Style TargetType="ScrollBar" BasedOn="{StaticResource ThinVerticalScrollBar}"/>
                             </ScrollViewer.Resources>
                             <ItemsControl x:Name="BindingList" ItemsSource="{Binding Rows}" Background="Transparent"
-                                          AllowDrop="True" DragOver="OnListDragOver" Drop="OnListDrop"
-                                          DragLeave="OnListDragLeave">
+                                          MouseMove="OnListMouseMove" PreviewMouseLeftButtonUp="OnListMouseUp"
+                                          LostMouseCapture="OnListLostCapture">
                                 <ItemsControl.Resources>
                                     <!-- A group's title row: click to fold, drag the handle to reorder groups -->
                                     <DataTemplate DataType="{x:Type local:GroupHeader}">

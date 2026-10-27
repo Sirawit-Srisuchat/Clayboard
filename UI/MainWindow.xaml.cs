@@ -30,6 +30,7 @@ public partial class MainWindow : Window
         StateChanged += (_, _) => UpdateMaximizedLayout();
         Loc.Changed += UpdateMaximizedLayout;
         BuildLanguageChips();
+        _drag = new RowDragController(BindingList, ListScroller, viewModel);
     }
 
     private void BuildLanguageChips()
@@ -96,10 +97,9 @@ public partial class MainWindow : Window
 
     // ---- Bindings list: groups, sorting, and moving rows ----
 
-    private const string DragFormat = "Clayboard.Row";
+    private readonly RowDragController _drag;
     private object? _dragCandidate;
     private Point _dragOrigin;
-    private InsertionAdorner? _insertion;
 
     private void OnHeaderClick(object sender, MouseButtonEventArgs e) =>
         _viewModel.ToggleCollapsed((GroupHeader)((FrameworkElement)sender).DataContext);
@@ -165,7 +165,7 @@ public partial class MainWindow : Window
     // Dragging starts from the handle only, so clicking a row still opens it for editing.
     private void OnHandleDown(object sender, MouseButtonEventArgs e)
     {
-        if (!_viewModel.CanReorder)
+        if (!_viewModel.CanReorder || _drag.IsDragging)
             return;
         _dragCandidate = ((FrameworkElement)sender).DataContext;
         _dragOrigin = e.GetPosition(this);
@@ -188,121 +188,43 @@ public partial class MainWindow : Window
         if (Math.Abs(moved.X) < SystemParameters.MinimumHorizontalDragDistance
             && Math.Abs(moved.Y) < SystemParameters.MinimumVerticalDragDistance)
             return;
-
         var item = _dragCandidate;
         _dragCandidate = null;
         ((UIElement)sender).ReleaseMouseCapture();
-        if (BindingList.ItemContainerGenerator.ContainerFromItem(item) is not UIElement container)
-            return;
-        container.Opacity = 0.35; // The row being moved stays visible as a ghost in its old place.
-        try
-        {
-            DragDrop.DoDragDrop(container, new DataObject(DragFormat, item), DragDropEffects.Move);
-        }
-        finally
-        {
-            container.Opacity = 1;
-            HideInsertion();
-        }
+        _drag.Begin(item); // From here the list holds the mouse until the button is released.
     }
 
-    private void OnListDragOver(object sender, DragEventArgs e)
+    private void OnListMouseMove(object sender, MouseEventArgs e)
     {
+        if (_drag.IsDragging)
+            _drag.Move();
+    }
+
+    private void OnListMouseUp(object sender, MouseButtonEventArgs e)
+    {
+        if (!_drag.IsDragging)
+            return;
+        _drag.Drop();
         e.Handled = true;
-        if (!e.Data.GetDataPresent(DragFormat))
+    }
+
+    // Losing the mouse mid-drag (another window took focus, say) puts everything back.
+    private void OnListLostCapture(object sender, MouseEventArgs e)
+    {
+        if (_drag.IsDragging)
+            _drag.Cancel();
+    }
+
+    protected override void OnPreviewKeyDown(KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && _drag.IsDragging)
         {
-            e.Effects = DragDropEffects.None;
+            _drag.Cancel();
+            e.Handled = true;
             return;
         }
-        e.Effects = DragDropEffects.Move;
-        ScrollNearEdges(e);
-        if (FindDropTarget(e) is { } target)
-            ShowInsertion(target.LineY);
-        else
-            HideInsertion();
+        base.OnPreviewKeyDown(e);
     }
-
-    private void OnListDrop(object sender, DragEventArgs e)
-    {
-        e.Handled = true;
-        HideInsertion();
-        if (e.Data.GetData(DragFormat) is { } dragged && FindDropTarget(e) is { } target)
-            _viewModel.MoveRow(dragged, target.Item, target.After);
-    }
-
-    private void OnListDragLeave(object sender, DragEventArgs e) => HideInsertion();
-
-    /// <summary>
-    /// The row under the pointer and whether the drop goes after it. Groups can only be dropped
-    /// between groups, so for them the line sits above a header or below that group's last row.
-    /// </summary>
-    private (object Item, bool After, double LineY)? FindDropTarget(DragEventArgs e)
-    {
-        var dragged = e.Data.GetData(DragFormat);
-        double pointer = e.GetPosition(BindingList).Y;
-        var rows = _viewModel.Rows;
-        (object Item, double Top, double Bottom)? last = null;
-
-        for (int i = 0; i < rows.Count; i++)
-        {
-            if (dragged is GroupHeader && rows[i] is not GroupHeader)
-                continue;
-            if (BindingList.ItemContainerGenerator.ContainerFromIndex(i) is not FrameworkElement container)
-                continue;
-            double top = container.TranslatePoint(new Point(0, 0), BindingList).Y;
-            double bottom = top + container.ActualHeight;
-            if (dragged is GroupHeader)
-                bottom = SectionBottom(i, bottom);
-            if (pointer < bottom)
-            {
-                bool after = pointer > (top + bottom) / 2;
-                return (rows[i], after, after ? bottom : top);
-            }
-            last = (rows[i], top, bottom);
-        }
-        return last is { } end ? (end.Item, true, end.Bottom) : null;
-    }
-
-    // Bottom edge of a group: its header plus every row under it, up to the next header.
-    private double SectionBottom(int headerIndex, double headerBottom)
-    {
-        double bottom = headerBottom;
-        for (int i = headerIndex + 1; i < _viewModel.Rows.Count && _viewModel.Rows[i] is not GroupHeader; i++)
-        {
-            if (BindingList.ItemContainerGenerator.ContainerFromIndex(i) is FrameworkElement row)
-                bottom = row.TranslatePoint(new Point(0, row.ActualHeight), BindingList).Y;
-        }
-        return bottom;
-    }
-
-    private void ScrollNearEdges(DragEventArgs e)
-    {
-        const double edge = 36;
-        double y = e.GetPosition(ListScroller).Y;
-        if (y < edge)
-            ListScroller.ScrollToVerticalOffset(ListScroller.VerticalOffset - 14);
-        else if (y > ListScroller.ActualHeight - edge)
-            ListScroller.ScrollToVerticalOffset(ListScroller.VerticalOffset + 14);
-    }
-
-    private void ShowInsertion(double y)
-    {
-        if (_insertion is null)
-        {
-            _insertion = new InsertionAdorner(BindingList, (Brush)FindResource("ClayBrush"));
-            AdornerLayer.GetAdornerLayer(BindingList)?.Add(_insertion);
-        }
-        _insertion.Y = y;
-    }
-
-    private void HideInsertion()
-    {
-        if (_insertion is null)
-            return;
-        AdornerLayer.GetAdornerLayer(BindingList)?.Remove(_insertion);
-        _insertion = null;
-    }
-
     private void OnProfileClick(object sender, MouseButtonEventArgs e)
     {
         _viewModel.ShowProfile((ProfileSummary)((FrameworkElement)sender).DataContext);
