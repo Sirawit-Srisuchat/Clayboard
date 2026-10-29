@@ -33,13 +33,30 @@ public sealed class AppConfig
 public sealed class BindingsFile
 {
     public string Format { get; set; } = "clayboard-bindings";
-    public int Version { get; set; } = 1;
+    public int Version { get; set; } = 2;
     public DateTime ExportedAt { get; set; } = DateTime.Now;
+
+    /// <summary>The app's settings, so one file moves everything to another PC. Missing in version 1 files.</summary>
+    public ExportedSettings? Settings { get; set; }
 
     /// <summary>Group order, so an import keeps the groups in the same order.</summary>
     public List<string> Groups { get; set; } = new();
 
     public List<HotkeyBinding> Bindings { get; set; } = new();
+}
+
+/// <summary>Everything on the Settings page and the list's view choices, as written to an export file.</summary>
+public sealed class ExportedSettings
+{
+    public string? Language { get; set; }
+    public string? Theme { get; set; }
+    public int? SequenceTimeoutMs { get; set; }
+    public string? Sort { get; set; }
+    public string? Show { get; set; }
+    public List<string>? CollapsedGroups { get; set; }
+
+    /// <summary>Lives in the registry rather than config.json; null leaves the PC's own choice alone.</summary>
+    public bool? StartWithWindows { get; set; }
 }
 
 public sealed class HotkeyBinding

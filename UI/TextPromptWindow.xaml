@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Clayboard" Width="380" SizeToContent="Height"
         WindowStartupLocation="CenterOwner" WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False"
-        Background="{StaticResource BgBrush}" Foreground="{StaticResource InkBrush}"
+        Background="{DynamicResource BgBrush}" Foreground="{DynamicResource InkBrush}"
         FontFamily="{DynamicResource UiFont}" FontSize="13"
         UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
 
@@ -12,12 +12,12 @@
                       CornerRadius="0" UseAeroCaptionButtons="False"/>
     </WindowChrome.WindowChrome>
 
-    <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="1">
+    <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="1">
         <StackPanel x:Name="Body" Margin="24,20,24,20">
             <TextBlock x:Name="HeaderText" FontSize="16" FontWeight="Medium" Background="Transparent"
                        MouseLeftButtonDown="OnDragHeader"/>
             <TextBox x:Name="Input" Style="{StaticResource Field}" Margin="0,14,0,0" TextChanged="OnTextChanged"/>
-            <TextBlock x:Name="ErrorText" Foreground="{StaticResource TerraBrush}" TextWrapping="Wrap"
+            <TextBlock x:Name="ErrorText" Foreground="{DynamicResource TerraBrush}" TextWrapping="Wrap"
                        Margin="2,8,0,0" Visibility="Collapsed"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
                 <Button Style="{StaticResource GhostButton}" Content="{DynamicResource Ed.Cancel}" Margin="0,0,8,0"

@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Focusable="True" IsTabStop="True" FocusVisualStyle="{x:Null}">
     <Grid Cursor="Hand" MouseLeftButtonUp="OnClick" ToolTip="{DynamicResource Rec.Tooltip}" FocusVisualStyle="{x:Null}">
-        <Border x:Name="Box" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}"
+        <Border x:Name="Box" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
                 BorderThickness="1" CornerRadius="10" Padding="16,14" MinHeight="96">
             <StackPanel x:Name="Panel" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <ItemsControl x:Name="Caps" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -19,7 +19,7 @@
                                     <TextBlock Text="{Binding Text}" FontSize="13" FontFamily="{StaticResource MonoFont}"/>
                                 </Border>
                                 <TextBlock x:Name="Arrow" Text="{Binding Text}" FontSize="13" Margin="1,0,0,0"
-                                           Foreground="{StaticResource MuteBrush}" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource MuteBrush}" VerticalAlignment="Center"
                                            Visibility="Collapsed"/>
                             </Grid>
                             <DataTemplate.Triggers>
@@ -37,12 +37,12 @@
         </Border>
         <!-- Drains while a sequence waits for more keys; when it's empty the sequence is done -->
         <Border x:Name="Progress" Height="2" VerticalAlignment="Bottom" Margin="16,0,16,7" CornerRadius="1"
-                Background="{StaticResource ClayBrush}" Visibility="Collapsed" IsHitTestVisible="False">
+                Background="{DynamicResource ClayBrush}" Visibility="Collapsed" IsHitTestVisible="False">
             <Border.RenderTransform>
                 <ScaleTransform x:Name="ProgressScale"/>
             </Border.RenderTransform>
         </Border>
-        <Rectangle x:Name="DashedOutline" RadiusX="10" RadiusY="10" Stroke="{StaticResource ClayBrush}"
+        <Rectangle x:Name="DashedOutline" RadiusX="10" RadiusY="10" Stroke="{DynamicResource ClayBrush}"
                    StrokeThickness="1" StrokeDashArray="4 3" Visibility="Collapsed" IsHitTestVisible="False"/>
     </Grid>
 </UserControl>

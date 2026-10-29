@@ -157,14 +157,14 @@ public partial class KeyRecorder : UserControl
     {
         base.OnGotKeyboardFocus(e);
         if (!_recording)
-            Box.BorderBrush = (Brush)FindResource("ClayBrush");
+            Box.SetResourceReference(Border.BorderBrushProperty, "ClayBrush");
     }
 
     protected override void OnLostKeyboardFocus(KeyboardFocusChangedEventArgs e)
     {
         base.OnLostKeyboardFocus(e);
         if (!_recording)
-            Box.BorderBrush = (Brush)FindResource("LineBrush");
+            Box.SetResourceReference(Border.BorderBrushProperty, "LineBrush");
     }
 
     protected override AutomationPeer OnCreateAutomationPeer() => new RecorderAutomationPeer(this);
@@ -360,8 +360,12 @@ public partial class KeyRecorder : UserControl
         Status.Visibility = text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         Status.Margin = !hasCaps ? new Thickness(0) : Compact ? new Thickness(8, 0, 0, 0) : new Thickness(0, 10, 0, 0);
         Status.Text = text;
-        Status.Foreground = (Brush)FindResource(recording ? "ClayBrush" : "MuteBrush");
-        Box.BorderBrush = recording ? Brushes.Transparent : (Brush)FindResource("LineBrush");
+        // Resource references rather than the brushes themselves, so a theme switch recolors them too.
+        Status.SetResourceReference(TextBlock.ForegroundProperty, recording ? "ClayBrush" : "MuteBrush");
+        if (recording)
+            Box.BorderBrush = Brushes.Transparent;
+        else
+            Box.SetResourceReference(Border.BorderBrushProperty, "LineBrush");
         SetMarchingAnts(recording);
     }
 

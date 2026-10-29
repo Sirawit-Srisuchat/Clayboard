@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:Clayboard.UI"
         Title="Binding" Width="480" SizeToContent="Height"
         WindowStartupLocation="CenterOwner" WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False"
-        Background="{StaticResource BgBrush}" Foreground="{StaticResource InkBrush}"
+        Background="{DynamicResource BgBrush}" Foreground="{DynamicResource InkBrush}"
         FontFamily="{DynamicResource UiFont}" FontSize="13"
         UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
 
@@ -13,7 +13,7 @@
                       CornerRadius="0" UseAeroCaptionButtons="False"/>
     </WindowChrome.WindowChrome>
 
-    <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="1">
+    <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="1">
         <DockPanel x:Name="Body">
             <!-- Header doubles as the drag handle -->
             <DockPanel DockPanel.Dock="Top" Background="Transparent" Margin="24,20,24,0"
@@ -30,10 +30,10 @@
 
             <!-- Footer -->
             <StackPanel DockPanel.Dock="Bottom" Margin="24,0,24,22">
-                <TextBlock x:Name="ErrorText" Foreground="{StaticResource TerraBrush}" TextWrapping="Wrap"
+                <TextBlock x:Name="ErrorText" Foreground="{DynamicResource TerraBrush}" TextWrapping="Wrap"
                            Margin="0,14,0,0" Visibility="Collapsed"/>
                 <!-- Closing with unsaved edits asks first -->
-                <Border x:Name="DiscardPanel" Background="{StaticResource TerraSoftBrush}" CornerRadius="8"
+                <Border x:Name="DiscardPanel" Background="{DynamicResource TerraSoftBrush}" CornerRadius="8"
                         Padding="12,9" Margin="0,14,0,0" Visibility="Collapsed">
                     <DockPanel>
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
@@ -42,13 +42,13 @@
                             <Button x:Name="DiscardButton" Style="{StaticResource PrimaryButton}"
                                     Content="{DynamicResource Ed.Discard}" Padding="12,6" Click="OnDiscard"/>
                         </StackPanel>
-                        <TextBlock Text="{DynamicResource Ed.Unsaved}" Foreground="{StaticResource TerraBrush}"
+                        <TextBlock Text="{DynamicResource Ed.Unsaved}" Foreground="{DynamicResource TerraBrush}"
                                    TextWrapping="Wrap" VerticalAlignment="Center"/>
                     </DockPanel>
                 </Border>
                 <DockPanel Margin="0,18,0,0">
                     <Button x:Name="DeleteButton" Style="{StaticResource LinkButton}" Content="{DynamicResource Ed.Delete}" FontSize="13"
-                            Foreground="{StaticResource TerraBrush}" VerticalAlignment="Center" Click="OnDelete"/>
+                            Foreground="{DynamicResource TerraBrush}" VerticalAlignment="Center" Click="OnDelete"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button x:Name="TestButton" Style="{StaticResource GhostButton}" Margin="0,0,8,0"
                                 Click="OnTest" ToolTip="{DynamicResource Ed.TestTooltip}">
@@ -72,10 +72,10 @@
                 <StackPanel Margin="24,0,24,0">
                     <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.HowToPress}"/>
                     <!-- Segmented control: the white pill slides to the chosen option -->
-                    <Border Background="{StaticResource SandBrush}" CornerRadius="10" Padding="3">
+                    <Border Background="{DynamicResource SandBrush}" CornerRadius="10" Padding="3">
                         <Grid>
-                            <Border x:Name="ModeThumb" Background="{StaticResource CardBrush}" CornerRadius="8"
-                                    BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
+                            <Border x:Name="ModeThumb" Background="{DynamicResource CardBrush}" CornerRadius="8"
+                                    BorderBrush="{DynamicResource LineBrush}" BorderThickness="1"
                                     HorizontalAlignment="Left">
                                 <Border.RenderTransform>
                                     <TranslateTransform x:Name="ModeThumbShift"/>
@@ -99,7 +99,7 @@
                     <TextBlock x:Name="ModeHint" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="2,8,0,0"
                                Visibility="Collapsed"/>
 
-                    <TextBlock x:Name="KeyWarning" Foreground="{StaticResource TerraBrush}" FontSize="12"
+                    <TextBlock x:Name="KeyWarning" Foreground="{DynamicResource TerraBrush}" FontSize="12"
                                TextWrapping="Wrap" Margin="2,8,0,0" Visibility="Collapsed"
                                Text="{DynamicResource Ed.Warn.CommonKey}"/>
 

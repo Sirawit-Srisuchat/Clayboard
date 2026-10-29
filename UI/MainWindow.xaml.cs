@@ -33,7 +33,9 @@ public partial class MainWindow : Window
         StateChanged += (_, _) => UpdateMaximizedLayout();
         Loc.Changed += UpdateMaximizedLayout;
         BuildLanguageChips();
-        BuildThemeChips();
+        BuildThemeButton();
+        Loc.Changed += BuildThemeButton;
+        Palette.Changed += BuildThemeButton;
         UpdateMaximizedLayout();
         _drag = new RowDragController(BindingList, ListScroller, viewModel);
     }
@@ -55,72 +57,91 @@ public partial class MainWindow : Window
         }
     }
 
-    // Picking a theme restyles the app, which rebuilds this window (see App.ApplyTheme) and keeps the Settings page open.
-    private void BuildThemeChips()
-    {
-        AddThemeChip(Palette.SystemKey, "Theme.System", Palette.FromWindows());
-        foreach (var theme in Palette.Themes)
-            AddThemeChip(theme.Key, theme.Key == Palette.OriginalKey ? "Theme.Original" : null, theme);
-    }
+    // ---- Theme dropdown. Picking a theme repaints every window in place (see Palette.Apply); the button's
+    // swatch and name are filled in again whenever the theme or the language changes. ----
 
-    private void AddThemeChip(string key, string? labelKey, ThemeColors colors)
+    private static IEnumerable<(string Key, ThemeColors Colors)> ThemeChoices() =>
+        new[] { (Palette.SystemKey, Palette.FromWindows()) }.Concat(Palette.Themes.Select(t => (t.Key, t)));
+
+    // Original and Follow Windows are translated; the other theme names are the same in every language.
+    private static string ThemeLabel(string key, ThemeColors colors) => key switch
     {
-        // A small preview: background, card, and accent side by side.
-        var swatch = new Border
+        Palette.SystemKey => Loc.T("Theme.System"),
+        Palette.OriginalKey => Loc.T("Theme.Original"),
+        _ => colors.Name,
+    };
+
+    private void BuildThemeButton()
+    {
+        var key = _viewModel.Theme;
+        var label = ThemeLabel(key, Palette.Resolve(key));
+        ThemeButton.Content = new StackPanel
         {
-            Width = 30,
-            Height = 14,
-            CornerRadius = new CornerRadius(4),
-            BorderThickness = new Thickness(1),
-            BorderBrush = Palette.Frozen(colors.Line),
-            Margin = new Thickness(0, 0, 8, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-            Child = new UniformGrid
+            Orientation = Orientation.Horizontal,
+            Children =
             {
-                Rows = 1,
-                Children =
+                ThemeSwatch(Palette.Resolve(key)),
+                new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center },
+                new TextBlock
                 {
-                    new Border { Background = Palette.Frozen(colors.Bg), CornerRadius = new CornerRadius(3, 0, 0, 3) },
-                    new Border { Background = Palette.Frozen(colors.Card) },
-                    new Border { Background = Palette.Frozen(colors.Clay), CornerRadius = new CornerRadius(0, 3, 3, 0) },
+                    Style = (Style)FindResource("Icon"), Text = "", FontSize = 9, Margin = new Thickness(10, 1, 0, 0),
                 },
             },
         };
-        var label = new TextBlock();
-        var chip = new RadioButton
-        {
-            Style = (Style)FindResource("Chip"),
-            GroupName = "Theme",
-            Content = new StackPanel { Orientation = Orientation.Horizontal, Children = { swatch, label } },
-            Tag = key,
-            IsChecked = key == _viewModel.Theme,
-        };
-        // Original and Follow Windows are translated; the other theme names are the same in every language.
-        if (labelKey is not null)
-        {
-            label.SetResourceReference(TextBlock.TextProperty, labelKey);
-            chip.SetResourceReference(AutomationProperties.NameProperty, labelKey);
-        }
-        else
-        {
-            label.Text = colors.Name;
-            AutomationProperties.SetName(chip, colors.Name);
-        }
-        chip.Checked += (_, _) => _viewModel.SetTheme(key);
-        ThemeChips.Children.Add(chip);
+        AutomationProperties.SetName(ThemeButton, $"{Loc.T("Settings.Theme")}: {label}");
     }
 
-    /// <summary>The Tag of the sidebar page that's showing ("Bindings", "Profiles", "Macros", or "Settings").</summary>
-    public string CurrentPage =>
-        NavItems().FirstOrDefault(r => r.IsChecked == true)?.Tag as string ?? "Bindings";
-
-    public void ShowPageByTag(string tag)
+    private void OnThemeMenu(object sender, RoutedEventArgs e)
     {
-        if (NavItems().FirstOrDefault(r => (string)r.Tag == tag) is { } item)
-            item.IsChecked = true;
+        var current = _viewModel.Theme;
+        var menu = new ContextMenu { PlacementTarget = ThemeButton, MinWidth = ThemeButton.ActualWidth };
+        foreach (var (key, colors) in ThemeChoices())
+        {
+            var label = ThemeLabel(key, colors);
+            var check = new TextBlock
+            {
+                Style = (Style)FindResource("Icon"),
+                Text = key == current ? "" : "",
+                FontSize = 10,
+                Width = 20,
+            };
+            var item = new MenuItem
+            {
+                Header = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Children = { check, ThemeSwatch(colors), new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center } },
+                },
+            };
+            // The header is a check, a swatch, and text, so name the item for screen readers.
+            AutomationProperties.SetName(item, label);
+            item.Click += (_, _) => _viewModel.SetTheme(key);
+            menu.Items.Add(item);
+        }
+        menu.IsOpen = true;
     }
 
-    private IEnumerable<RadioButton> NavItems() => ((Panel)NavBindings.Parent).Children.OfType<RadioButton>();
+    /// <summary>A small preview of a theme: background, card, and accent side by side.</summary>
+    private static Border ThemeSwatch(ThemeColors colors) => new()
+    {
+        Width = 30,
+        Height = 14,
+        CornerRadius = new CornerRadius(4),
+        BorderThickness = new Thickness(1),
+        BorderBrush = Palette.Frozen(colors.Line),
+        Margin = new Thickness(0, 0, 8, 0),
+        VerticalAlignment = VerticalAlignment.Center,
+        Child = new UniformGrid
+        {
+            Rows = 1,
+            Children =
+            {
+                new Border { Background = Palette.Frozen(colors.Bg), CornerRadius = new CornerRadius(3, 0, 0, 3) },
+                new Border { Background = Palette.Frozen(colors.Card) },
+                new Border { Background = Palette.Frozen(colors.Clay), CornerRadius = new CornerRadius(0, 3, 3, 0) },
+            },
+        },
+    };
 
     protected override void OnSourceInitialized(EventArgs e)
     {
@@ -133,6 +154,8 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         Loc.Changed -= UpdateMaximizedLayout;
+        Loc.Changed -= BuildThemeButton;
+        Palette.Changed -= BuildThemeButton;
         _undoTimer?.Stop();
         base.OnClosed(e);
     }
@@ -400,6 +423,7 @@ public partial class MainWindow : Window
 
     private List<HotkeyBinding>? _pendingImport;
     private List<string> _pendingGroups = new();
+    private ExportedSettings? _pendingSettings;
 
     private string FileFilter => $"{Loc.T("Settings.FileFilter")} (*.json)|*.json";
 
@@ -410,7 +434,7 @@ public partial class MainWindow : Window
             Title = Loc.T("Settings.Export"),
             Filter = FileFilter,
             DefaultExt = ".json",
-            FileName = $"Clayboard-bindings-{DateTime.Now:yyyy-MM-dd}.json",
+            FileName = $"Clayboard-backup-{DateTime.Now:yyyy-MM-dd}.json",
         };
         if (dialog.ShowDialog(this) != true)
             return;
@@ -436,15 +460,23 @@ public partial class MainWindow : Window
             return;
         try
         {
-            var bindings = ConfigStore.ReadBindingsFile(dialog.FileName, out _pendingGroups);
+            var bindings = ConfigStore.ReadBindingsFile(dialog.FileName, out _pendingGroups, out _pendingSettings);
             if (bindings.Count == 0)
             {
-                ShowBackupStatus(Loc.T("Settings.ImportNone"), isError: true);
+                if (_pendingSettings is null)
+                {
+                    ShowBackupStatus(Loc.T("Settings.ImportNone"), isError: true);
+                    return;
+                }
+                // Settings alone: there are no bindings to merge, so nothing to ask.
+                ApplyPendingSettings();
+                ShowBackupStatus(Loc.T("Settings.ImportSettingsDone"), isError: false);
                 return;
             }
             // Ask how to merge before changing anything.
             _pendingImport = bindings;
-            ImportFoundText.Text = Loc.F("Settings.ImportFound", bindings.Count, Path.GetFileName(dialog.FileName));
+            ImportFoundText.Text = Loc.F("Settings.ImportFound", bindings.Count, Path.GetFileName(dialog.FileName))
+                + (_pendingSettings is null ? "" : " " + Loc.T("Settings.ImportHasSettings"));
             BackupStatus.Visibility = Visibility.Collapsed;
             ImportChoice.Visibility = Visibility.Visible;
             Motion.FadeIn(ImportChoice, fromY: 4);
@@ -462,6 +494,7 @@ public partial class MainWindow : Window
     private void OnImportCancel(object sender, RoutedEventArgs e)
     {
         _pendingImport = null;
+        _pendingSettings = null;
         ImportChoice.Visibility = Visibility.Collapsed;
     }
 
@@ -472,15 +505,42 @@ public partial class MainWindow : Window
         var (added, backupPath) = _viewModel.ImportBindings(_pendingImport, _pendingGroups, replace);
         _pendingImport = null;
         ImportChoice.Visibility = Visibility.Collapsed;
-        ShowBackupStatus(replace
+        bool hadSettings = ApplyPendingSettings(); // After the bindings, so folded groups match the imported ones.
+        ShowBackupStatus((replace
             ? Loc.F("Settings.ImportReplaced", added, backupPath)
-            : Loc.F("Settings.ImportDone", added), isError: false);
+            : Loc.F("Settings.ImportDone", added))
+            + (hadSettings ? " " + Loc.T("Settings.ImportSettingsDone") : ""), isError: false);
+    }
+
+    /// <summary>Takes on the settings read from an import file, if it had any. Returns whether it did.</summary>
+    private bool ApplyPendingSettings()
+    {
+        var settings = _pendingSettings;
+        _pendingSettings = null;
+        if (settings is null)
+            return false;
+        _viewModel.ImportSettings(settings);
+        SettingsError.Visibility = Visibility.Collapsed;
+        if (settings.StartWithWindows is { } startup && startup != StartupManager.IsEnabled)
+        {
+            try
+            {
+                StartupManager.SetEnabled(startup);
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+            {
+                SettingsError.Text = Loc.F("Settings.StartupError", ex.Message);
+                SettingsError.Visibility = Visibility.Visible;
+            }
+        }
+        SyncSettingsPage();
+        return true;
     }
 
     private void ShowBackupStatus(string message, bool isError)
     {
         BackupStatus.Text = message;
-        BackupStatus.Foreground = (System.Windows.Media.Brush)FindResource(isError ? "TerraBrush" : "MuteBrush");
+        BackupStatus.SetResourceReference(TextBlock.ForegroundProperty, isError ? "TerraBrush" : "MuteBrush");
         BackupStatus.Visibility = Visibility.Visible;
         Motion.FadeIn(BackupStatus, fromY: 4);
     }
@@ -538,13 +598,19 @@ public partial class MainWindow : Window
                 ShowPage(ProfilesPage);
                 break;
             default:
-                SyncStartupSwitch();
-                SequenceWaitBox.Text = _viewModel.SequenceTimeoutMs.ToString();
-                foreach (RadioButton chip in LanguageChips.Children)
-                    chip.IsChecked = (string)chip.Tag == Loc.Language;
+                SyncSettingsPage();
                 ShowPage(SettingsPage);
                 break;
         }
+    }
+
+    /// <summary>Shows the current settings in the Settings page's controls.</summary>
+    private void SyncSettingsPage()
+    {
+        SyncStartupSwitch();
+        SequenceWaitBox.Text = _viewModel.SequenceTimeoutMs.ToString();
+        foreach (RadioButton chip in LanguageChips.Children)
+            chip.IsChecked = (string)chip.Tag == Loc.Language;
     }
 
     private void ShowPage(FrameworkElement page)

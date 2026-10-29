@@ -26,7 +26,6 @@ public partial class App : Application
     private MainWindow? _window;
     private bool _trayHintShown;
     private bool _exiting;
-    private bool _restyling;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -101,23 +100,8 @@ public partial class App : Application
         });
     }
 
-    private void ApplyTheme(string key)
-    {
-        if (!Palette.Apply(key) || _window is null)
-            return;
-        // Styles took their colors when the window was built, so build it again in the same place and on the same page.
-        var (bounds, state, page) = (_window.RestoreBounds, _window.WindowState, _window.CurrentPage);
-        _restyling = true;
-        _window.Close();
-        _restyling = false;
-        ShowWindow();
-        _window!.Left = bounds.Left;
-        _window.Top = bounds.Top;
-        _window.Width = bounds.Width;
-        _window.Height = bounds.Height;
-        _window.WindowState = state;
-        _window.ShowPageByTag(page);
-    }
+    // Open windows repaint in place: their brushes are DynamicResource references to the palette.
+    private static void ApplyTheme(string key) => Palette.Apply(key);
 
     protected override void OnExit(ExitEventArgs e)
     {
@@ -154,7 +138,7 @@ public partial class App : Application
     private void OnWindowClosed(object? sender, EventArgs e)
     {
         _window = null;
-        if (_exiting || _restyling)
+        if (_exiting)
             return;
         // Off the UI thread, so closing the window (and opening it again soon after) never waits on the GC.
         Task.Run(TrimMemory);

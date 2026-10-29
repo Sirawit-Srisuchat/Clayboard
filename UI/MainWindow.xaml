@@ -4,7 +4,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Clayboard" Width="780" Height="540" MinWidth="620" MinHeight="420"
         WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize"
-        Background="{StaticResource BgBrush}" Foreground="{StaticResource InkBrush}"
+        Background="{DynamicResource BgBrush}" Foreground="{DynamicResource InkBrush}"
         FontFamily="{DynamicResource UiFont}" FontSize="13"
         UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
 
@@ -13,7 +13,7 @@
                       CornerRadius="0" UseAeroCaptionButtons="False"/>
     </WindowChrome.WindowChrome>
 
-    <Border x:Name="Root" BorderBrush="{StaticResource LineBrush}" BorderThickness="1">
+    <Border x:Name="Root" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="40"/>
@@ -21,7 +21,7 @@
             </Grid.RowDefinitions>
 
             <!-- Title bar -->
-            <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1">
+            <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
@@ -33,7 +33,7 @@
                                 AutomationProperties.Name="{DynamicResource Win.CloseToTray}" Click="OnClose"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0">
-                        <Border Width="10" Height="10" CornerRadius="3" Background="{StaticResource ClayBrush}"/>
+                        <Border Width="10" Height="10" CornerRadius="3" Background="{DynamicResource ClayBrush}"/>
                         <TextBlock Text="Clayboard" FontWeight="Medium" Margin="8,0,0,0"/>
                     </StackPanel>
                 </DockPanel>
@@ -46,7 +46,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Sidebar -->
-                <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,1,0" Padding="10,16">
+                <Border BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,1,0" Padding="10,16">
                     <DockPanel>
                         <!-- Status and Pause get their own columns, so long translations trim instead of overlapping -->
                         <Grid DockPanel.Dock="Bottom" Margin="12,0,12,4">
@@ -55,7 +55,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Ellipse x:Name="StatusDot" Width="7" Height="7" Fill="{StaticResource SageBrush}"
+                            <Ellipse x:Name="StatusDot" Width="7" Height="7" Fill="{DynamicResource SageBrush}"
                                      VerticalAlignment="Center"/>
                             <TextBlock Grid.Column="1" Style="{StaticResource Muted}" Text="{Binding StatusText}"
                                        Margin="8,0,8,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
@@ -135,27 +135,27 @@
                     </DockPanel>
 
                     <StackPanel Grid.Row="1">
-                        <Border Background="{StaticResource TerraSoftBrush}" CornerRadius="8"
+                        <Border Background="{DynamicResource TerraSoftBrush}" CornerRadius="8"
                                 Padding="12,9" Margin="24,0,24,12"
                                 Visibility="{Binding HasLoadError, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="{Binding LoadError}" Foreground="{StaticResource TerraBrush}"
+                            <TextBlock Text="{Binding LoadError}" Foreground="{DynamicResource TerraBrush}"
                                        TextWrapping="Wrap"/>
                         </Border>
 
-                        <Border Background="{StaticResource TerraSoftBrush}" CornerRadius="8"
+                        <Border Background="{DynamicResource TerraSoftBrush}" CornerRadius="8"
                                 Padding="12,9" Margin="24,0,24,12"
                                 Visibility="{Binding HasUntrusted, Converter={StaticResource BoolToVis}}">
                             <DockPanel>
                                 <Button DockPanel.Dock="Right" Style="{StaticResource PrimaryButton}" Padding="12,6"
                                         Margin="12,0,0,0" VerticalAlignment="Center" Content="{DynamicResource Trust.Allow}"
                                         Click="OnAllowUntrusted"/>
-                                <TextBlock Text="{Binding TrustBanner}" Foreground="{StaticResource TerraBrush}"
+                                <TextBlock Text="{Binding TrustBanner}" Foreground="{DynamicResource TerraBrush}"
                                            TextWrapping="Wrap" VerticalAlignment="Center"/>
                             </DockPanel>
                         </Border>
 
                         <!-- Shown for a while after deleting a group, to take it back -->
-                        <Border x:Name="UndoBanner" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}"
+                        <Border x:Name="UndoBanner" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
                                 BorderThickness="1" CornerRadius="8" Padding="12,9" Margin="24,0,24,12"
                                 Visibility="Collapsed">
                             <DockPanel>
@@ -224,13 +224,13 @@
                                                         ToolTip="{DynamicResource Group.Menu}"
                                                         AutomationProperties.Name="{DynamicResource Group.Menu}"/>
                                                 <TextBlock x:Name="Handle" Style="{StaticResource Icon}" Text="&#xE700;"
-                                                           FontSize="11" Width="18" Foreground="{StaticResource MuteBrush}"
+                                                           FontSize="11" Width="18" Foreground="{DynamicResource MuteBrush}"
                                                            Background="Transparent" Cursor="SizeAll"
                                                            ToolTip="{DynamicResource Row.Drag}"
                                                            PreviewMouseLeftButtonDown="OnHandleDown"
                                                            PreviewMouseMove="OnHandleMove" MouseLeftButtonUp="OnHandleUp"/>
                                                 <TextBlock Style="{StaticResource Icon}" Text="{Binding Chevron}" FontSize="9"
-                                                           Foreground="{StaticResource MuteBrush}" Margin="2,0,8,0"/>
+                                                           Foreground="{DynamicResource MuteBrush}" Margin="2,0,8,0"/>
                                                 <TextBlock Text="{Binding Display}" FontWeight="Medium" FontSize="12"
                                                            VerticalAlignment="Center"/>
                                                 <TextBlock Style="{StaticResource Muted}" Text="{Binding Count}"
@@ -272,7 +272,7 @@
                                                     <ColumnDefinition Width="44"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock x:Name="Handle" Style="{StaticResource Icon}" Text="&#xE700;"
-                                                           FontSize="11" Foreground="{StaticResource MuteBrush}"
+                                                           FontSize="11" Foreground="{DynamicResource MuteBrush}"
                                                            Background="Transparent" Cursor="SizeAll" Opacity="0.45"
                                                            ToolTip="{DynamicResource Row.Drag}"
                                                            PreviewMouseLeftButtonDown="OnHandleDown"
@@ -313,7 +313,7 @@
                                                     <TextBlock Style="{StaticResource Muted}" Text="{Binding Subtitle}"
                                                                TextTrimming="CharacterEllipsis"/>
                                                     <TextBlock Text="{Binding Error}" FontSize="12"
-                                                               Foreground="{StaticResource TerraBrush}"
+                                                               Foreground="{DynamicResource TerraBrush}"
                                                                TextWrapping="Wrap" Margin="0,2,0,0"
                                                                Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}"/>
                                                 </StackPanel>
@@ -383,7 +383,7 @@
                                         <DockPanel>
                                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource Icon}"
                                                        Text="&#xE76C;" FontSize="11"
-                                                       Foreground="{StaticResource MuteBrush}"/>
+                                                       Foreground="{DynamicResource MuteBrush}"/>
                                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource Muted}"
                                                        Text="{Binding CountText}" VerticalAlignment="Center"
                                                        Margin="0,0,14,0"/>
@@ -406,7 +406,7 @@
                 </ScrollViewer.Resources>
                 <StackPanel Margin="24,22,24,14">
                     <TextBlock Text="{DynamicResource Settings.Title}" FontSize="22" FontWeight="Medium"/>
-                    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}"
+                    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
                             BorderThickness="1" CornerRadius="10" Padding="16,14,16,8" Margin="0,18,0,0">
                         <StackPanel>
                             <TextBlock Text="{DynamicResource Settings.Language}"/>
@@ -414,16 +414,17 @@
                             <WrapPanel x:Name="LanguageChips" Margin="0,10,0,0"/>
                         </StackPanel>
                     </Border>
-                    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}"
+                    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
                             BorderThickness="1" CornerRadius="10" Padding="16,14,16,8" Margin="0,10,0,0">
                         <StackPanel>
                             <TextBlock Text="{DynamicResource Settings.Theme}"/>
                             <TextBlock Style="{StaticResource Muted}" Text="{DynamicResource Settings.ThemeHint}"
                                        TextWrapping="Wrap"/>
-                            <WrapPanel x:Name="ThemeChips" Margin="0,10,0,0"/>
+                            <Button x:Name="ThemeButton" Style="{StaticResource GhostButton}" Padding="12,7"
+                                    Margin="0,10,0,6" HorizontalAlignment="Left" Click="OnThemeMenu"/>
                         </StackPanel>
                     </Border>
-                    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}"
+                    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
                             BorderThickness="1" CornerRadius="10" Padding="16,14" Margin="0,10,0,0">
                         <DockPanel>
                             <ToggleButton x:Name="StartupSwitch" DockPanel.Dock="Right" Style="{StaticResource Switch}"
@@ -436,7 +437,7 @@
                             </StackPanel>
                         </DockPanel>
                     </Border>
-                    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}"
+                    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
                             BorderThickness="1" CornerRadius="10" Padding="16,14" Margin="0,10,0,0">
                         <DockPanel>
                             <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="{DynamicResource Settings.OpenFolder}"
@@ -448,7 +449,7 @@
                             </StackPanel>
                         </DockPanel>
                     </Border>
-                    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}"
+                    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
                             BorderThickness="1" CornerRadius="10" Padding="16,14" Margin="0,10,0,0">
                         <StackPanel>
                             <DockPanel>
@@ -481,7 +482,7 @@
                                        Margin="0,10,0,0" Visibility="Collapsed"/>
                         </StackPanel>
                     </Border>
-                    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}"
+                    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
                             BorderThickness="1" CornerRadius="10" Padding="16,14" Margin="0,10,0,0">
                         <DockPanel>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
@@ -498,7 +499,7 @@
                             </StackPanel>
                         </DockPanel>
                     </Border>
-                    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource LineBrush}"
+                    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
                             BorderThickness="1" CornerRadius="10" Padding="16,14" Margin="0,10,0,0">
                         <StackPanel>
                             <TextBlock Text="{DynamicResource Settings.Emergency}"/>
@@ -506,7 +507,7 @@
                                        TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
-                    <TextBlock x:Name="SettingsError" Foreground="{StaticResource TerraBrush}" TextWrapping="Wrap"
+                    <TextBlock x:Name="SettingsError" Foreground="{DynamicResource TerraBrush}" TextWrapping="Wrap"
                                Margin="0,12,0,0" Visibility="Collapsed"/>
                 </StackPanel>
                 </ScrollViewer>

@@ -83,9 +83,10 @@ public sealed class ConfigStore : IDisposable
     private const long MaxImportBytes = 2 * 1024 * 1024;
 
     /// <summary>Writes bindings to an export file.</summary>
-    public static void WriteBindingsFile(string path, IEnumerable<HotkeyBinding> bindings, IEnumerable<string>? groups = null)
+    public static void WriteBindingsFile(string path, IEnumerable<HotkeyBinding> bindings, IEnumerable<string>? groups = null,
+        ExportedSettings? settings = null)
     {
-        var file = new BindingsFile { Bindings = bindings.ToList(), Groups = groups?.ToList() ?? new() };
+        var file = new BindingsFile { Bindings = bindings.ToList(), Groups = groups?.ToList() ?? new(), Settings = settings };
         File.WriteAllText(path, JsonSerializer.Serialize(file, JsonOptions));
     }
 
@@ -93,21 +94,39 @@ public sealed class ConfigStore : IDisposable
     /// Reads the bindings from an export file, or from a config.json, which has the same "bindings" list.
     /// Throws <see cref="JsonException"/> or <see cref="IOException"/> when the file can't be used.
     /// </summary>
-    public static List<HotkeyBinding> ReadBindingsFile(string path) => ReadBindingsFile(path, out _);
+    public static List<HotkeyBinding> ReadBindingsFile(string path) => ReadBindingsFile(path, out _, out _);
 
     /// <inheritdoc cref="ReadBindingsFile(string)"/>
-    public static List<HotkeyBinding> ReadBindingsFile(string path, out List<string> groups)
+    /// <param name="settings">The exported settings, or, for a config.json, its own; null when the file has none.</param>
+    public static List<HotkeyBinding> ReadBindingsFile(string path, out List<string> groups, out ExportedSettings? settings)
     {
         if (new FileInfo(path).Length > MaxImportBytes)
             throw new IOException("The file is too large to be a bindings file.");
-        var file = JsonSerializer.Deserialize<BindingsFile>(File.ReadAllText(path), JsonOptions)
+        var json = File.ReadAllText(path);
+        var file = JsonSerializer.Deserialize<BindingsFile>(json, JsonOptions)
                    ?? throw new JsonException("The file is empty.");
         groups = file.Groups ?? new();
+        settings = file.Settings ?? SettingsOf(JsonSerializer.Deserialize<AppConfig>(json, JsonOptions)!);
         var bindings = (file.Bindings ?? new()).Where(b => b is not null).ToList();
         foreach (var binding in bindings)
             binding.Action ??= new ActionSpec();
         return bindings;
     }
+
+    // A config.json keeps its settings at the top level; an older export file has none of them.
+    private static ExportedSettings? SettingsOf(AppConfig config) =>
+        config.Language is null && config.Theme is null && config.SequenceTimeoutMs is null
+            && config.Sort is null && config.Show is null && config.CollapsedGroups is not { Count: > 0 }
+            ? null
+            : new ExportedSettings
+            {
+                Language = config.Language,
+                Theme = config.Theme,
+                SequenceTimeoutMs = config.SequenceTimeoutMs,
+                Sort = config.Sort,
+                Show = config.Show,
+                CollapsedGroups = config.CollapsedGroups,
+            };
 
     /// <summary>JSON exactly as config.json writes it, for fingerprinting actions.</summary>
     public static string Serialize(object value) => JsonSerializer.Serialize(value, JsonOptions);

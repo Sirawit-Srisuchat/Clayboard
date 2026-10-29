@@ -71,11 +71,49 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
     public bool HasUntrusted => UntrustedCount > 0;
     public string TrustBanner => Loc.F("Trust.Banner", string.Join(", ", Items.Where(i => !i.IsTrusted).Select(i => i.Name)));
 
-    /// <summary>Saves every binding to <paramref name="path"/>. Returns how many were written.</summary>
+    /// <summary>Saves every binding and setting to <paramref name="path"/>. Returns how many bindings were written.</summary>
     public int ExportBindings(string path)
     {
-        ConfigStore.WriteBindingsFile(path, _config.Bindings, _config.Groups);
+        ConfigStore.WriteBindingsFile(path, _config.Bindings, _config.Groups, CurrentSettings());
         return _config.Bindings.Count;
+    }
+
+    private ExportedSettings CurrentSettings() => new()
+    {
+        Language = _config.Language,
+        Theme = _config.Theme,
+        SequenceTimeoutMs = _config.SequenceTimeoutMs,
+        Sort = _config.Sort,
+        Show = _config.Show,
+        CollapsedGroups = _config.CollapsedGroups.ToList(),
+        StartWithWindows = StartupManager.IsEnabled,
+    };
+
+    /// <summary>
+    /// Takes on the settings from an import file and saves them. Starting with Windows is left to the
+    /// caller, since it lives in the registry and can fail on its own.
+    /// </summary>
+    public void ImportSettings(ExportedSettings settings)
+    {
+        _config.Language = settings.Language;
+        var theme = Palette.Normalize(settings.Theme);
+        _config.Theme = theme == Palette.OriginalKey ? null : theme;
+        _config.SequenceTimeoutMs = settings.SequenceTimeoutMs is { } ms
+            ? Math.Clamp(ms, HotkeyEngine.MinSequenceTimeoutMs, HotkeyEngine.MaxSequenceTimeoutMs)
+            : null;
+        _config.Sort = settings.Sort;
+        _config.Show = settings.Show;
+        _config.CollapsedGroups = settings.CollapsedGroups?.ToList() ?? new();
+
+        NormalizeGroups();
+        if (!TrySave(out var error))
+            LoadError = error;
+        ThemeChanged?.Invoke(Theme);
+        if (Loc.Resolve(_config.Language) != Loc.Language)
+            Loc.Apply(_config.Language); // Rebuilds the list itself.
+        else
+            RebuildItems();
+        OnPropertyChanged(string.Empty); // Sort and filter labels, and anything else shown from the config.
     }
 
     /// <summary>
@@ -93,7 +131,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
             var folder = Path.Combine(ConfigStore.AppDataFolder, "backups");
             Directory.CreateDirectory(folder);
             backupPath = Path.Combine(folder, $"bindings-{DateTime.Now:yyyyMMdd-HHmmss}.json");
-            ConfigStore.WriteBindingsFile(backupPath, _config.Bindings, _config.Groups);
+            ConfigStore.WriteBindingsFile(backupPath, _config.Bindings, _config.Groups, CurrentSettings());
             _config.Bindings.Clear();
             _config.Groups.Clear();
         }

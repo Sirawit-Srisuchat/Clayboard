@@ -79,9 +79,12 @@ public static class Palette
     public static ThemeColors Resolve(string key) =>
         key == SystemKey ? FromWindows() : Themes.FirstOrDefault(t => t.Key == key) ?? Themes[0];
 
+    /// <summary>Raised after <see cref="Apply"/> switches colors, for UI that draws theme previews.</summary>
+    public static event Action? Changed;
+
     /// <summary>
-    /// Puts the theme's colors and the styles built on them into the app's resources. Styles look colors up once,
-    /// so windows opened from then on use the new ones; a window already open keeps its look until reopened.
+    /// Switches every open window to the theme right away. The XAML refers to the brushes with DynamicResource,
+    /// so swapping them in the app's resources repaints everything in place, the way switching language does.
     /// Returns false when nothing changed.
     /// </summary>
     public static bool Apply(string? key)
@@ -91,19 +94,23 @@ public static class Palette
         if (_colors is not null && key == CurrentKey && colors == CurrentColors)
             return false;
 
-        var merged = Application.Current.Resources.MergedDictionaries;
-        if (_colors is not null)
-            merged.Remove(_colors);
-        if (_theme is not null)
-            merged.Remove(_theme);
-
         CurrentKey = key;
         CurrentColors = colors;
-        _colors = Build(colors);
-        // The colors go in first so the styles' StaticResource lookups find them while Theme.xaml loads.
-        merged.Insert(0, _colors);
-        _theme = new ResourceDictionary { Source = new Uri("pack://application:,,,/UI/Theme.xaml") };
-        merged.Insert(1, _theme);
+        if (_colors is null)
+        {
+            // First time: the brushes go in ahead of Theme.xaml, whose styles look them up.
+            _colors = new ResourceDictionary();
+            Fill(_colors, colors);
+            var merged = Application.Current.Resources.MergedDictionaries;
+            merged.Insert(0, _colors);
+            _theme = new ResourceDictionary { Source = new Uri("pack://application:,,,/UI/Theme.xaml") };
+            merged.Insert(1, _theme);
+        }
+        else
+        {
+            Fill(_colors, colors);
+        }
+        Changed?.Invoke();
         return true;
     }
 
@@ -112,16 +119,8 @@ public static class Palette
         SystemColors.WindowTextColor, SystemColors.GrayTextColor, SystemColors.HighlightColor, SystemColors.HighlightColor,
         SystemColors.HotTrackColor, SystemColors.WindowColor, SystemColors.HighlightTextColor);
 
-    private static ResourceDictionary Build(ThemeColors t)
+    private static void Fill(ResourceDictionary colors, ThemeColors t)
     {
-        var colors = new ResourceDictionary
-        {
-            ["CardColor"] = t.Card,
-            ["LineColor"] = t.Line,
-            ["ClayColor"] = t.Clay,
-            // The card color fully see-through: rows fade their background in from it on hover.
-            ["CardClearColor"] = Color.FromArgb(0, t.Card.R, t.Card.G, t.Card.B),
-        };
         foreach (var (key, color) in new[]
                  {
                      ("BgBrush", t.Bg), ("CardBrush", t.Card), ("LineBrush", t.Line), ("SandBrush", t.Sand),
@@ -131,7 +130,6 @@ public static class Palette
         {
             colors[key] = Frozen(color);
         }
-        return colors;
     }
 
     /// <summary>A frozen brush, cheap to share between controls (theme swatches in Settings use these too).</summary>
