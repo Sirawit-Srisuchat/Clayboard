@@ -12,6 +12,7 @@ Global hotkeys and macros for Windows that type text, launch apps, control media
 ![WPF](https://img.shields.io/badge/UI-WPF-8B5E3C)
 ![Languages](https://img.shields.io/badge/languages-6-7D8B6A)
 ![Version](https://img.shields.io/badge/version-1.1.0-B5653F)
+![License](https://img.shields.io/badge/license-MIT-3B2F26)
 
 [English](#english) · [ภาษาไทย](#ภาษาไทย)
 
