@@ -433,10 +433,23 @@ public partial class BindingEditorWindow : Window
             everyApp.Click += (_, _) => box.Text = "";
             menu.Items.Add(everyApp);
         }
-        foreach (var name in RunningAppNames())
+        foreach (var name in RunningApps().Keys)
         {
             var item = new MenuItem { Header = name };
             item.Click += (_, _) => box.Text = name;
+            menu.Items.Add(item);
+        }
+        menu.IsOpen = true;
+    }
+
+    /// <summary>Offers running apps for the program path, filling in each one's full path.</summary>
+    private void OnChooseProgram(object sender, RoutedEventArgs e)
+    {
+        var menu = new ContextMenu { PlacementTarget = (UIElement)sender };
+        foreach (var (name, path) in RunningApps())
+        {
+            var item = new MenuItem { Header = name, ToolTip = path };
+            item.Click += (_, _) => PathBox.Text = path ?? name;
             menu.Items.Add(item);
         }
         menu.IsOpen = true;
@@ -457,19 +470,25 @@ public partial class BindingEditorWindow : Window
         menu.IsOpen = true;
     }
 
-    /// <summary>Exe names of apps that currently show a window, such as "chrome.exe".</summary>
-    private static IEnumerable<string> RunningAppNames()
+    /// <summary>
+    /// Apps that currently show a window, keyed by exe name such as "chrome.exe", with the full
+    /// exe path where Windows lets us read it.
+    /// </summary>
+    private static SortedDictionary<string, string?> RunningApps()
     {
         int self = Environment.ProcessId;
-        var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        var apps = new SortedDictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
         foreach (var process in Process.GetProcesses())
         {
             using (process)
             {
                 try
                 {
-                    if (process.Id != self && process.MainWindowHandle != IntPtr.Zero && process.MainWindowTitle.Length > 0)
-                        names.Add(process.ProcessName + ".exe");
+                    if (process.Id == self || process.MainWindowHandle == IntPtr.Zero || process.MainWindowTitle.Length == 0)
+                        continue;
+                    string name = process.ProcessName + ".exe";
+                    if (!apps.TryGetValue(name, out var path) || path is null)
+                        apps[name] = ExePath(process);
                 }
                 catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
                 {
@@ -477,7 +496,33 @@ public partial class BindingEditorWindow : Window
                 }
             }
         }
-        return names;
+        return apps;
+    }
+
+    private static string? ExePath(Process process)
+    {
+        try
+        {
+            return process.MainModule?.FileName;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
+        {
+            // Elevated or protected processes hide their modules.
+            return null;
+        }
+    }
+
+    /// <summary>Picks an exe and puts its file name in the text box named in the button's Tag.</summary>
+    private void OnBrowseApp(object sender, RoutedEventArgs e)
+    {
+        var box = (TextBox)((Button)sender).Tag;
+        var dialog = new OpenFileDialog
+        {
+            Title = Loc.T("Ed.BrowseTitle"),
+            Filter = $"{Loc.T("Ed.Programs")} (*.exe)|*.exe|{Loc.T("Ed.AllFiles")} (*.*)|*.*",
+        };
+        if (dialog.ShowDialog(this) == true)
+            box.Text = System.IO.Path.GetFileName(dialog.FileName);
     }
 
     private void OnBrowse(object sender, RoutedEventArgs e)
