@@ -49,6 +49,19 @@ public partial class BindingEditorWindow : Window
         Load(original ?? draft ?? new HotkeyBinding());
         _loading = false;
         UpdateKeyWarning();
+        _loaded = Snapshot();
+    }
+
+    // The form as first shown, to tell whether closing would lose edits.
+    private readonly string _loaded;
+    private bool _discardConfirmed;
+
+    /// <summary>The form's contents as text. Secret text is compared as typed, since encrypting it differs every time.</summary>
+    private string Snapshot()
+    {
+        var binding = Build();
+        binding.Action.Secret = null;
+        return ConfigStore.Serialize(binding) + "|" + SecretSwitch.IsChecked + "|" + ValueBox.Text;
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -61,6 +74,20 @@ public partial class BindingEditorWindow : Window
 
     protected override void OnClosing(CancelEventArgs e)
     {
+        // Saved or deleted set DialogResult; any other way out (Esc, Cancel, ×, Alt+F4) checks for edits first.
+        if (DialogResult != true && !_discardConfirmed && Snapshot() != _loaded)
+        {
+            e.Cancel = true;
+            KeyRecorder.CancelActive();
+            HideError();
+            if (DiscardPanel.Visibility != Visibility.Visible)
+            {
+                DiscardPanel.Visibility = Visibility.Visible;
+                Motion.FadeIn(DiscardPanel, fromY: 4, ms: 180);
+            }
+            DiscardButton.Focus();
+            return;
+        }
         KeyRecorder.CancelActive();
         _testCountdown?.Stop();
         base.OnClosing(e);
@@ -201,6 +228,14 @@ public partial class BindingEditorWindow : Window
     }
 
     private void OnCancel(object sender, RoutedEventArgs e) => Close();
+
+    private void OnKeepEditing(object sender, RoutedEventArgs e) => DiscardPanel.Visibility = Visibility.Collapsed;
+
+    private void OnDiscard(object sender, RoutedEventArgs e)
+    {
+        _discardConfirmed = true;
+        Close();
+    }
 
     private void OnTest(object sender, RoutedEventArgs e)
     {
@@ -423,17 +458,19 @@ public partial class BindingEditorWindow : Window
     private static MacroStep StepOf(object sender) => (MacroStep)((FrameworkElement)sender).DataContext;
 
     /// <summary>Offers running apps for the text box named in the button's Tag.</summary>
-    private void OnChooseApp(object sender, RoutedEventArgs e)
+    private async void OnChooseApp(object sender, RoutedEventArgs e)
     {
-        var box = (TextBox)((Button)sender).Tag;
-        var menu = new ContextMenu { PlacementTarget = (UIElement)sender };
+        var button = (Button)sender;
+        var box = (TextBox)button.Tag;
+        var apps = await RunningAppsFor(button);
+        var menu = new ContextMenu { PlacementTarget = button };
         if (box == AppBox)
         {
             var everyApp = new MenuItem { Header = Loc.T("Ed.EveryApp") };
             everyApp.Click += (_, _) => box.Text = "";
             menu.Items.Add(everyApp);
         }
-        foreach (var name in RunningApps().Keys)
+        foreach (var name in apps.Keys)
         {
             var item = new MenuItem { Header = name };
             item.Click += (_, _) => box.Text = name;
@@ -443,10 +480,12 @@ public partial class BindingEditorWindow : Window
     }
 
     /// <summary>Offers running apps for the program path, filling in each one's full path.</summary>
-    private void OnChooseProgram(object sender, RoutedEventArgs e)
+    private async void OnChooseProgram(object sender, RoutedEventArgs e)
     {
-        var menu = new ContextMenu { PlacementTarget = (UIElement)sender };
-        foreach (var (name, path) in RunningApps())
+        var button = (Button)sender;
+        var apps = await RunningAppsFor(button);
+        var menu = new ContextMenu { PlacementTarget = button };
+        foreach (var (name, path) in apps)
         {
             var item = new MenuItem { Header = name, ToolTip = path };
             item.Click += (_, _) => PathBox.Text = path ?? name;
@@ -468,6 +507,23 @@ public partial class BindingEditorWindow : Window
             menu.Items.Add(item);
         }
         menu.IsOpen = true;
+    }
+
+    /// <summary>
+    /// Lists running apps off the UI thread (asking every process for its window and path can take a while),
+    /// with the button turned off meanwhile so a second click doesn't start another search.
+    /// </summary>
+    private static async Task<SortedDictionary<string, string?>> RunningAppsFor(Button button)
+    {
+        button.IsEnabled = false;
+        try
+        {
+            return await Task.Run(RunningApps);
+        }
+        finally
+        {
+            button.IsEnabled = true;
+        }
     }
 
     /// <summary>

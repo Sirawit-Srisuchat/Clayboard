@@ -27,7 +27,9 @@ public sealed class HotkeyEngine : IDisposable
     public const int MaxSequenceTimeoutMs = 5000;
     private const int DoubleTapMs = 400;
 
-    private sealed record Entry(TriggerSpec Trigger, HotkeyBinding Binding, string? App);
+    // StartsPrograms bindings ignore keys typed by other programs, so nothing that can send keystrokes
+    // (a script, a page in a sandboxed browser) gets to launch programs through us.
+    private sealed record Entry(TriggerSpec Trigger, HotkeyBinding Binding, string? App, bool StartsPrograms);
 
     private sealed class HoldState(Entry entry, int vk, bool swallowed)
     {
@@ -83,6 +85,9 @@ public sealed class HotkeyEngine : IDisposable
     private Mods _captureLastMod;
 
     private volatile bool _paused;
+
+    // Whether the key being handled was typed by another program.
+    private bool _injected;
 
     private HotkeyEngine()
     {
@@ -150,7 +155,8 @@ public sealed class HotkeyEngine : IDisposable
     {
         var lookup = bindings
             .Select(b => new Entry(b.Trigger, b.Binding,
-                string.IsNullOrWhiteSpace(b.Binding.App) ? null : ForegroundTracker.Normalize(b.Binding.App)))
+                string.IsNullOrWhiteSpace(b.Binding.App) ? null : ForegroundTracker.Normalize(b.Binding.App),
+                ActionRunner.StartsPrograms(b.Binding.Action)))
             .GroupBy(e => e.Trigger.First)
             .ToDictionary(g => g.Key, g => g.OrderBy(e => e.App is null).ToArray());
         OnHookThread(() =>
@@ -206,8 +212,9 @@ public sealed class HotkeyEngine : IDisposable
         _dispatcher.InvokeShutdown();
     }
 
-    private bool OnKey(int vk, bool isDown)
+    private bool OnKey(int vk, bool isDown, bool injected)
     {
+        _injected = injected;
         bool isRepeat = isDown && !_down.Add(vk);
         if (!isDown)
             _down.Remove(vk);
@@ -269,7 +276,7 @@ public sealed class HotkeyEngine : IDisposable
         // Most presses match nothing and return above; the rest pick by mode without allocating.
         _candidates.Clear();
         foreach (var entry in entries)
-            if (entry.App is null || entry.App == app)
+            if ((entry.App is null || entry.App == app) && !(_injected && entry.StartsPrograms))
                 _candidates.Add(entry);
 
         if (isDoubleTap && Find(TriggerMode.DoubleTap, sequence: false) is { } doubleTap)
@@ -382,7 +389,8 @@ public sealed class HotkeyEngine : IDisposable
         if (KeyCombo.IsModifierVk(vk))
             return true; // Modifiers for the next step: let them through and keep waiting.
 
-        var matching = _sequence.Where(e => e.Trigger.Steps[_sequenceIndex] == combo).ToList();
+        var matching = _sequence
+            .Where(e => e.Trigger.Steps[_sequenceIndex] == combo && !(_injected && e.StartsPrograms)).ToList();
         if (matching.Count == 0)
         {
             ReplayHeldBackKeys();

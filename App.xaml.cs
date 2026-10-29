@@ -4,12 +4,14 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using Clayboard.Config;
 using Clayboard.Core;
 using Clayboard.Localization;
 using Clayboard.UI;
+using Microsoft.Win32;
 
 namespace Clayboard;
 
@@ -24,10 +26,13 @@ public partial class App : Application
     private MainWindow? _window;
     private bool _trayHintShown;
     private bool _exiting;
+    private bool _restyling;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        Palette.Apply(Palette.FromWindows());
+        SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
         Loc.Apply(null); // Windows display language until config.json says otherwise.
 
         // The mutex is only a fast check: anything can create one with this name, so before giving up,
@@ -81,8 +86,37 @@ public partial class App : Application
         return found;
     }
 
+    // Switching Windows between light, dark, and high contrast restyles the app right away.
+    private void OnUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
+    {
+        if (e.Category is not (UserPreferenceCategory.General or UserPreferenceCategory.Color
+            or UserPreferenceCategory.Accessibility or UserPreferenceCategory.VisualStyle))
+            return;
+        Dispatcher.InvokeAsync(() =>
+        {
+            var mode = Palette.FromWindows();
+            if (mode == Palette.Current)
+                return;
+            Palette.Apply(mode);
+            if (_window is null)
+                return;
+            // Styles took their colors when the window was built, so build it again in the same place.
+            var (bounds, state) = (_window.RestoreBounds, _window.WindowState);
+            _restyling = true;
+            _window.Close();
+            _restyling = false;
+            ShowWindow();
+            _window!.Left = bounds.Left;
+            _window.Top = bounds.Top;
+            _window.Width = bounds.Width;
+            _window.Height = bounds.Height;
+            _window.WindowState = state;
+        });
+    }
+
     protected override void OnExit(ExitEventArgs e)
     {
+        SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
         _engine?.Dispose();
         _tray?.Dispose();
         _store?.Dispose();
@@ -115,9 +149,10 @@ public partial class App : Application
     private void OnWindowClosed(object? sender, EventArgs e)
     {
         _window = null;
-        if (_exiting)
+        if (_exiting || _restyling)
             return;
-        TrimMemory();
+        // Off the UI thread, so closing the window (and opening it again soon after) never waits on the GC.
+        Task.Run(TrimMemory);
         if (_trayHintShown)
             return;
         _trayHintShown = true;

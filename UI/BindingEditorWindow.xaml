@@ -20,7 +20,7 @@
                        MouseLeftButtonDown="OnDragHeader">
                 <Button DockPanel.Dock="Right" Style="{StaticResource ChromeButton}" Width="30" Height="30"
                         VerticalAlignment="Top" Margin="0,-4,-10,0" Content="&#xE8BB;" ToolTip="{DynamicResource Win.Close}"
-                        Click="OnCancel"/>
+                        AutomationProperties.Name="{DynamicResource Win.Close}" Click="OnCancel"/>
                 <StackPanel>
                     <TextBlock x:Name="HeaderText" Text="{DynamicResource Ed.New}" FontSize="18" FontWeight="Medium"/>
                     <TextBlock Style="{StaticResource Muted}" Margin="0,2,0,0"
@@ -32,6 +32,20 @@
             <StackPanel DockPanel.Dock="Bottom" Margin="24,0,24,22">
                 <TextBlock x:Name="ErrorText" Foreground="{StaticResource TerraBrush}" TextWrapping="Wrap"
                            Margin="0,14,0,0" Visibility="Collapsed"/>
+                <!-- Closing with unsaved edits asks first -->
+                <Border x:Name="DiscardPanel" Background="{StaticResource TerraSoftBrush}" CornerRadius="8"
+                        Padding="12,9" Margin="0,14,0,0" Visibility="Collapsed">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource GhostButton}" Content="{DynamicResource Ed.KeepEditing}"
+                                    Padding="12,6" Margin="12,0,8,0" Click="OnKeepEditing"/>
+                            <Button x:Name="DiscardButton" Style="{StaticResource PrimaryButton}"
+                                    Content="{DynamicResource Ed.Discard}" Padding="12,6" Click="OnDiscard"/>
+                        </StackPanel>
+                        <TextBlock Text="{DynamicResource Ed.Unsaved}" Foreground="{StaticResource TerraBrush}"
+                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </DockPanel>
+                </Border>
                 <DockPanel Margin="0,18,0,0">
                     <Button x:Name="DeleteButton" Style="{StaticResource LinkButton}" Content="{DynamicResource Ed.Delete}" FontSize="13"
                             Foreground="{StaticResource TerraBrush}" VerticalAlignment="Center" Click="OnDelete"/>
@@ -45,7 +59,8 @@
                         </Button>
                         <Button Style="{StaticResource GhostButton}" Content="{DynamicResource Ed.Cancel}" Margin="0,0,8,0"
                                 IsCancel="True" Click="OnCancel"/>
-                        <Button Style="{StaticResource PrimaryButton}" Content="{DynamicResource Ed.Save}" Click="OnSave"/>
+                        <Button Style="{StaticResource PrimaryButton}" Content="{DynamicResource Ed.Save}" Click="OnSave"
+                                IsDefault="True"/>
                     </StackPanel>
                 </DockPanel>
             </StackPanel>
@@ -91,24 +106,24 @@
                     <StackPanel x:Name="HoldPanel" Orientation="Horizontal" Margin="2,10,0,0" Visibility="Collapsed">
                         <TextBlock Style="{StaticResource Muted}" Text="{DynamicResource Ed.HoldFor}"
                                    VerticalAlignment="Center"/>
-                        <TextBox x:Name="HoldBox" Style="{StaticResource Field}" Tag="500" Width="90" Margin="10,0,0,0"/>
+                        <TextBox x:Name="HoldBox" Style="{StaticResource Field}" AutomationProperties.Name="{DynamicResource Ed.HoldFor}" Tag="500" Width="90" Margin="10,0,0,0"/>
                     </StackPanel>
 
                     <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.Name}"/>
-                    <TextBox x:Name="NameBox" Style="{StaticResource Field}" Tag="{DynamicResource Ed.NamePlaceholder}"/>
+                    <TextBox x:Name="NameBox" Style="{StaticResource Field}" AutomationProperties.Name="{DynamicResource Ed.Name}" Tag="{DynamicResource Ed.NamePlaceholder}"/>
 
                     <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.OnlyInApp}"/>
                     <DockPanel>
                         <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="{DynamicResource Ed.Choose}"
                                 Padding="12,7" Margin="8,0,0,0" Click="OnChooseApp" Tag="{Binding ElementName=AppBox}"/>
-                        <TextBox x:Name="AppBox" Style="{StaticResource Field}" Tag="{DynamicResource Ed.EveryApp}"/>
+                        <TextBox x:Name="AppBox" Style="{StaticResource Field}" AutomationProperties.Name="{DynamicResource Ed.OnlyInApp}" Tag="{DynamicResource Ed.EveryApp}"/>
                     </DockPanel>
 
                     <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.Group}"/>
                     <DockPanel>
                         <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="{DynamicResource Ed.Choose}"
                                 Padding="12,7" Margin="8,0,0,0" Click="OnChooseGroup"/>
-                        <TextBox x:Name="GroupBox" Style="{StaticResource Field}" Tag="{DynamicResource Group.None}"/>
+                        <TextBox x:Name="GroupBox" Style="{StaticResource Field}" AutomationProperties.Name="{DynamicResource Ed.Group}" Tag="{DynamicResource Group.None}"/>
                     </DockPanel>
 
                     <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.Action}"/>
@@ -134,13 +149,13 @@
                                     Padding="12,7" Margin="8,0,0,0" Click="OnChooseProgram"/>
                             <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Content="{DynamicResource Ed.Browse}"
                                     Padding="12,7" Margin="8,0,0,0" Click="OnBrowse"/>
-                            <TextBox x:Name="PathBox" Style="{StaticResource Field}" Tag="notepad.exe"
+                            <TextBox x:Name="PathBox" Style="{StaticResource Field}" AutomationProperties.Name="{DynamicResource Ed.Path}" Tag="notepad.exe"
                                      TextChanged="OnPathChanged"/>
                         </DockPanel>
                         <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.Args}"/>
-                        <TextBox x:Name="ArgsBox" Style="{StaticResource Field}" Tag="--new-window"/>
+                        <TextBox x:Name="ArgsBox" Style="{StaticResource Field}" AutomationProperties.Name="{DynamicResource Ed.Args}" Tag="--new-window"/>
                         <DockPanel Margin="0,16,0,0">
-                            <ToggleButton x:Name="ToggleCloseSwitch" DockPanel.Dock="Right" Style="{StaticResource Switch}"
+                            <ToggleButton x:Name="ToggleCloseSwitch" DockPanel.Dock="Right" Style="{StaticResource Switch}" AutomationProperties.Name="{DynamicResource Ed.ToggleClose}"
                                           VerticalAlignment="Center" Checked="OnToggleCloseChanged"
                                           Unchecked="OnToggleCloseChanged"/>
                             <StackPanel Margin="0,0,12,0">
@@ -158,7 +173,7 @@
                                 <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}"
                                         Content="{DynamicResource Ed.Browse}" Padding="12,7" Margin="8,0,0,0"
                                         Click="OnBrowseApp" Tag="{Binding ElementName=ToggleProcessBox}"/>
-                                <TextBox x:Name="ToggleProcessBox" Style="{StaticResource Field}" Tag="notepad.exe"/>
+                                <TextBox x:Name="ToggleProcessBox" Style="{StaticResource Field}" AutomationProperties.Name="{DynamicResource Ed.CloseWhich}" Tag="notepad.exe"/>
                             </DockPanel>
                         </StackPanel>
                     </StackPanel>
@@ -172,18 +187,18 @@
                             <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}"
                                     Content="{DynamicResource Ed.Browse}" Padding="12,7" Margin="8,0,0,0"
                                     Click="OnBrowseApp" Tag="{Binding ElementName=CloseProcessBox}"/>
-                            <TextBox x:Name="CloseProcessBox" Style="{StaticResource Field}" Tag="notepad.exe"/>
+                            <TextBox x:Name="CloseProcessBox" Style="{StaticResource Field}" AutomationProperties.Name="{DynamicResource Ed.AppToClose}" Tag="notepad.exe"/>
                         </DockPanel>
                         <TextBlock Style="{StaticResource Muted}" Text="{DynamicResource Ed.CloseHint}" TextWrapping="Wrap"
                                    Margin="2,8,0,0"/>
                     </StackPanel>
                     <StackPanel x:Name="TextPanel" Visibility="Collapsed">
                         <TextBlock Style="{StaticResource FieldLabel}" Text="{DynamicResource Ed.TextToType}"/>
-                        <TextBox x:Name="ValueBox" Style="{StaticResource Field}" Tag="you@example.com"
+                        <TextBox x:Name="ValueBox" Style="{StaticResource Field}" AutomationProperties.Name="{DynamicResource Ed.TextToType}" Tag="you@example.com"
                                  AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" MaxHeight="160"
                                  VerticalScrollBarVisibility="Auto"/>
                         <DockPanel Margin="0,12,0,0">
-                            <ToggleButton x:Name="SecretSwitch" DockPanel.Dock="Right" Style="{StaticResource Switch}"
+                            <ToggleButton x:Name="SecretSwitch" DockPanel.Dock="Right" Style="{StaticResource Switch}" AutomationProperties.Name="{DynamicResource Ed.Secret}"
                                           VerticalAlignment="Center"/>
                             <StackPanel Margin="0,0,12,0">
                                 <TextBlock Text="{DynamicResource Ed.Secret}"/>
@@ -235,11 +250,14 @@
                                         <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="6,0,0,0"
                                                     VerticalAlignment="Center">
                                             <Button Style="{StaticResource IconButton}" Content="&#xE70E;"
-                                                    ToolTip="{DynamicResource Ed.MoveUp}" Click="OnMoveStepUp"/>
+                                                    ToolTip="{DynamicResource Ed.MoveUp}" Click="OnMoveStepUp"
+                                                    AutomationProperties.Name="{DynamicResource Ed.MoveUp}"/>
                                             <Button Style="{StaticResource IconButton}" Content="&#xE70D;"
-                                                    ToolTip="{DynamicResource Ed.MoveDown}" Click="OnMoveStepDown"/>
+                                                    ToolTip="{DynamicResource Ed.MoveDown}" Click="OnMoveStepDown"
+                                                    AutomationProperties.Name="{DynamicResource Ed.MoveDown}"/>
                                             <Button Style="{StaticResource IconButton}" Content="&#xE711;"
-                                                    ToolTip="{DynamicResource Ed.Remove}" Click="OnRemoveStep"/>
+                                                    ToolTip="{DynamicResource Ed.Remove}" Click="OnRemoveStep"
+                                                    AutomationProperties.Name="{DynamicResource Ed.Remove}"/>
                                         </StackPanel>
                                     </Grid>
                                     <DataTemplate.Triggers>
@@ -295,7 +313,7 @@
                     </StackPanel>
 
                     <DockPanel Margin="0,18,0,0">
-                        <ToggleButton x:Name="SuppressSwitch" DockPanel.Dock="Right" Style="{StaticResource Switch}"
+                        <ToggleButton x:Name="SuppressSwitch" DockPanel.Dock="Right" Style="{StaticResource Switch}" AutomationProperties.Name="{DynamicResource Ed.Block}"
                                       VerticalAlignment="Center" IsChecked="True" Checked="OnSuppressChanged"
                                       Unchecked="OnSuppressChanged"/>
                         <StackPanel>

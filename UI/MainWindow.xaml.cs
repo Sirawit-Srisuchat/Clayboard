@@ -10,6 +10,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Clayboard.Config;
 using Clayboard.Core;
 using Clayboard.Localization;
@@ -30,6 +31,7 @@ public partial class MainWindow : Window
         StateChanged += (_, _) => UpdateMaximizedLayout();
         Loc.Changed += UpdateMaximizedLayout;
         BuildLanguageChips();
+        UpdateMaximizedLayout();
         _drag = new RowDragController(BindingList, ListScroller, viewModel);
     }
 
@@ -61,6 +63,7 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         Loc.Changed -= UpdateMaximizedLayout;
+        _undoTimer?.Stop();
         base.OnClosed(e);
     }
 
@@ -72,6 +75,7 @@ public partial class MainWindow : Window
         Root.BorderThickness = maximized ? new Thickness(0) : new Thickness(1);
         MaximizeButton.Content = maximized ? "" : "";
         MaximizeButton.ToolTip = Loc.T(maximized ? "Win.Restore" : "Win.Maximize");
+        AutomationProperties.SetName(MaximizeButton, (string)MaximizeButton.ToolTip);
     }
 
     private void OnMinimize(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -89,11 +93,41 @@ public partial class MainWindow : Window
         new BindingEditorWindow(_viewModel, null, _viewModel.NewDraft()) { Owner = this }.ShowDialog();
 
     // The row's switch handles its own clicks, so this only fires for the rest of the row.
-    private void OnRowClick(object sender, MouseButtonEventArgs e) =>
-        new BindingEditorWindow(_viewModel, ((BindingItem)((FrameworkElement)sender).DataContext).Model)
-        {
-            Owner = this,
-        }.ShowDialog();
+    private void OnRowClick(object sender, MouseButtonEventArgs e) => OpenEditor((BindingItem)((FrameworkElement)sender).DataContext);
+
+    private void OpenEditor(BindingItem item) =>
+        new BindingEditorWindow(_viewModel, item.Model) { Owner = this }.ShowDialog();
+
+    // Enter or Space on a focused row, or a screen reader's invoke.
+    private void OnRowInvoked(object sender, RoutedEventArgs e) => OpenEditor((BindingItem)((FrameworkElement)sender).DataContext);
+
+    // Ctrl+Up/Down moves the focused row, like its arrow buttons.
+    private void OnRowKeyDown(object sender, KeyEventArgs e)
+    {
+        if (!ReferenceEquals(e.OriginalSource, sender) || Keyboard.Modifiers != ModifierKeys.Control
+            || e.Key is not (Key.Up or Key.Down) || !_viewModel.CanReorder)
+            return;
+        var item = (BindingItem)((FrameworkElement)sender).DataContext;
+        if (e.Key == Key.Up)
+            _viewModel.MoveUp(item);
+        else
+            _viewModel.MoveDown(item);
+        FocusRowOf(item); // The row's control may have moved; keep focus on it for the next press.
+        e.Handled = true;
+    }
+
+    private void FocusRowOf(object item) => Dispatcher.InvokeAsync(() =>
+    {
+        if (BindingList.ItemContainerGenerator.ContainerFromItem(item) is ContentPresenter container
+            && VisualTreeHelper.GetChildrenCount(container) > 0
+            && VisualTreeHelper.GetChild(container, 0) is UIElement row)
+            row.Focus();
+    }, System.Windows.Threading.DispatcherPriority.Loaded);
+
+    private void OnHeaderInvoked(object sender, RoutedEventArgs e) =>
+        _viewModel.ToggleCollapsed((GroupHeader)((FrameworkElement)sender).DataContext);
+
+    private void OnProfileInvoked(object sender, RoutedEventArgs e) => OpenProfile(sender);
 
     // ---- Bindings list: groups, sorting, and moving rows ----
 
@@ -123,9 +157,41 @@ public partial class MainWindow : Window
         rename.Click += (_, _) => new TextPromptWindow(Loc.T("Group.Rename"), Loc.T("Group.NamePlaceholder"),
             header.Name!, name => _viewModel.RenameGroup(header.Name!, name)) { Owner = this }.ShowDialog();
         var delete = new MenuItem { Header = Loc.T("Group.Delete") };
-        delete.Click += (_, _) => _viewModel.DeleteGroup(header.Name!);
+        delete.Click += (_, _) => ShowUndo(_viewModel.DeleteGroup(header.Name!));
         var menu = new ContextMenu { PlacementTarget = (UIElement)sender, Items = { rename, delete } };
         menu.IsOpen = true;
+    }
+
+    private MainViewModel.DeletedGroup? _deletedGroup;
+    private DispatcherTimer? _undoTimer;
+
+    private void ShowUndo(MainViewModel.DeletedGroup deleted)
+    {
+        _deletedGroup = deleted;
+        UndoText.Text = Loc.F("Group.Deleted", deleted.Name);
+        UndoBanner.Visibility = Visibility.Visible;
+        Motion.FadeIn(UndoBanner, fromY: 4);
+        if (_undoTimer is null)
+        {
+            _undoTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
+            _undoTimer.Tick += (_, _) => HideUndo();
+        }
+        _undoTimer.Stop();
+        _undoTimer.Start();
+    }
+
+    private void HideUndo()
+    {
+        _undoTimer?.Stop();
+        _deletedGroup = null;
+        UndoBanner.Visibility = Visibility.Collapsed;
+    }
+
+    private void OnUndoDeleteGroup(object sender, RoutedEventArgs e)
+    {
+        if (_deletedGroup is { } deleted)
+            _viewModel.RestoreGroup(deleted);
+        HideUndo();
     }
 
     private void OnSortMenu(object sender, RoutedEventArgs e) =>
@@ -225,7 +291,9 @@ public partial class MainWindow : Window
         }
         base.OnPreviewKeyDown(e);
     }
-    private void OnProfileClick(object sender, MouseButtonEventArgs e)
+    private void OnProfileClick(object sender, MouseButtonEventArgs e) => OpenProfile(sender);
+
+    private void OpenProfile(object sender)
     {
         _viewModel.ShowProfile((ProfileSummary)((FrameworkElement)sender).DataContext);
         ShowPage(BindingsPage);
@@ -360,8 +428,13 @@ public partial class MainWindow : Window
         SequenceWaitBox.Text = _viewModel.SetSequenceTimeout(ms).ToString();
     }
 
+    // Full paths to Windows' own tools: a bare name is looked up next to our exe first, where a portable
+    // copy in Downloads could find a planted look-alike.
+    private static string WindowsTool(string exe) =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), exe);
+
     private void OnOpenConfigFolder(object sender, RoutedEventArgs e) =>
-        Process.Start("explorer.exe", $"/select,\"{_viewModel.ConfigPath}\"");
+        Process.Start(WindowsTool("explorer.exe"), $"/select,\"{_viewModel.ConfigPath}\"");
 
     private void OnEditConfig(object sender, RoutedEventArgs e)
     {
@@ -372,7 +445,7 @@ public partial class MainWindow : Window
         catch (Win32Exception)
         {
             // No app is registered for .json files.
-            Process.Start("notepad.exe", $"\"{_viewModel.ConfigPath}\"");
+            Process.Start(Path.Combine(Environment.SystemDirectory, "notepad.exe"), $"\"{_viewModel.ConfigPath}\"");
         }
     }
 

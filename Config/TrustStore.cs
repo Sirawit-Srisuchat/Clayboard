@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Clayboard.Core;
+using Microsoft.Win32;
 
 namespace Clayboard.Config;
 
@@ -23,12 +24,28 @@ public sealed class TrustStore
     public TrustStore()
     {
         _path = Path.Combine(ConfigStore.AppDataFolder, "trusted.json");
-        IsNew = !File.Exists(_path);
-        _trusted = IsNew ? new HashSet<string>() : Read(_path);
+        // The registry flag outlives trusted.json, so deleting that file can't make an edited config
+        // look like a first run whose bindings are all approved.
+        IsNew = !File.Exists(_path) && !WasEverSaved;
+        _trusted = File.Exists(_path) ? Read(_path) : new HashSet<string>();
+        if (File.Exists(_path) && !WasEverSaved)
+            MarkSaved(); // Approvals saved before the flag existed.
     }
+
+    private const string FlagKeyPath = @"Software\Clayboard";
+    private const string FlagValueName = "TrustStoreCreated";
 
     /// <summary>True when no approvals were ever saved: the first run, or an upgrade from before this check.</summary>
     public bool IsNew { get; private set; }
+
+    private static bool WasEverSaved
+    {
+        get
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(FlagKeyPath);
+            return key?.GetValue(FlagValueName) is int;
+        }
+    }
 
     public bool IsTrusted(HotkeyBinding binding) => _trusted.Contains(Fingerprint(binding));
 
@@ -57,7 +74,15 @@ public sealed class TrustStore
         var temp = _path + ".tmp";
         File.WriteAllText(temp, JsonSerializer.Serialize(_trusted.OrderBy(f => f)));
         File.Move(temp, _path, overwrite: true);
+        if (IsNew)
+            MarkSaved();
         IsNew = false;
+    }
+
+    private static void MarkSaved()
+    {
+        using var key = Registry.CurrentUser.CreateSubKey(FlagKeyPath);
+        key.SetValue(FlagValueName, 1, RegistryValueKind.DWord);
     }
 
     private static HashSet<string> Read(string path)

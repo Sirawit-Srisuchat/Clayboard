@@ -10,6 +10,7 @@ internal static class NativeMethods
     public const int WM_KEYUP = 0x0101;
     public const int WM_SYSKEYDOWN = 0x0104;
     public const int WM_SYSKEYUP = 0x0105;
+    public const uint LLKHF_INJECTED = 0x10;
 
     public const uint INPUT_KEYBOARD = 1;
     public const uint KEYEVENTF_EXTENDEDKEY = 0x0001;

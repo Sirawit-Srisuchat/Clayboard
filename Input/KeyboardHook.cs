@@ -11,8 +11,11 @@ namespace Clayboard.Input;
 /// </summary>
 public sealed class KeyboardHook : IDisposable
 {
-    /// <summary>Return true to swallow the key so no other app sees it.</summary>
-    public delegate bool KeyHandler(int vk, bool isDown);
+    /// <summary>
+    /// Return true to swallow the key so no other app sees it. <paramref name="injected"/> is true when
+    /// another program typed the key (SendInput) rather than the physical keyboard.
+    /// </summary>
+    public delegate bool KeyHandler(int vk, bool isDown, bool injected);
 
     private readonly KeyHandler _handler;
     // Held in a field so the GC can't collect the delegate while Windows still calls it.
@@ -56,7 +59,7 @@ public sealed class KeyboardHook : IDisposable
             {
                 try
                 {
-                    if (_handler((int)data.vkCode, isDown))
+                    if (_handler((int)data.vkCode, isDown, (data.flags & LLKHF_INJECTED) != 0))
                         return 1;
                 }
                 catch

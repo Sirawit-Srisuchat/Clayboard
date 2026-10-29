@@ -33,7 +33,28 @@ public sealed class BindingItem : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public HotkeyBinding Model { get; }
+    public HotkeyBinding Model { get; private set; }
+
+    /// <summary>
+    /// What the row shows, apart from on/off and group: rows with the same key look the same, so a reload can
+    /// keep the row (and its control) and just point it at the new copy of the binding.
+    /// </summary>
+    public static string ContentKey(HotkeyBinding binding, bool isTrusted) =>
+        $"{isTrusted}|{binding.Name}|{binding.Trigger}|{binding.Mode}|{binding.HoldMs}|{binding.App}|{binding.Suppress}|"
+        + Config.ConfigStore.Serialize(binding.Action);
+
+    public string ContentKey() => ContentKey(Model, IsTrusted);
+
+    /// <summary>Points this row at an equal copy of its binding (see <see cref="ContentKey(HotkeyBinding, bool)"/>).</summary>
+    public void Rebind(HotkeyBinding model)
+    {
+        if (ReferenceEquals(Model, model))
+            return;
+        bool enabledChanged = Model.Enabled != model.Enabled;
+        Model = model;
+        if (enabledChanged)
+            OnPropertyChanged(nameof(Enabled));
+    }
 
     /// <summary>False when the action was changed outside the app and hasn't been approved yet.</summary>
     public bool IsTrusted { get; }

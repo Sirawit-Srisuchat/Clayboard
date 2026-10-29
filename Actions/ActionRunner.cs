@@ -107,6 +107,14 @@ public static class ActionRunner
             : null;
     }
 
+    /// <summary>True for actions that start a program, alone or as a macro step.</summary>
+    public static bool StartsPrograms(ActionSpec action) => Normalize(action.Type) switch
+    {
+        "run" => true,
+        "macro" => action.Steps?.Exists(s => s is not null && Normalize(s.Type) == "run") == true,
+        _ => false,
+    };
+
     /// <summary>True for actions that type into whichever window has focus.</summary>
     public static bool TypesIntoFocusedWindow(ActionSpec action) =>
         Normalize(action.Type) is "text" or "sendkeys" or "macro";

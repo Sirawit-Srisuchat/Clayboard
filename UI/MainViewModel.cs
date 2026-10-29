@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Windows.Threading;
 using Clayboard.Config;
 using Clayboard.Core;
 using Clayboard.Input;
@@ -46,7 +47,14 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
         _engine = engine;
         _trust = trust;
         Loc.Changed += OnLanguageChanged;
+        _searchDelay.Tick += (_, _) =>
+        {
+            _searchDelay.Stop();
+            RebuildRows();
+        };
     }
+
+    private readonly DispatcherTimer _searchDelay = new() { Interval = TimeSpan.FromMilliseconds(150) };
 
     public event PropertyChangedEventHandler? PropertyChanged;
     public event Action<bool>? PausedChanged;
@@ -149,7 +157,9 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
         {
             _searchText = value;
             OnPropertyChanged();
-            RebuildRows();
+            // Filter once typing pauses rather than on every letter.
+            _searchDelay.Stop();
+            _searchDelay.Start();
         }
     }
 
@@ -255,7 +265,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
     {
         if (_scope == ListScope.Profile && _profileKey is null)
             _profileName = Loc.T("Profiles.Global");
-        RebuildItems();
+        RebuildItems(reuse: false); // Subtitles and keycaps are translated when a row is made.
         OnPropertyChanged(string.Empty); // Every text property may have changed.
     }
 
@@ -312,11 +322,28 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
         RebuildRows();
     }
 
-    private void RebuildItems()
+    private void RebuildItems(bool reuse = true)
     {
+        // Keep the row of every binding that looks the same as before, so saving one edit or reloading
+        // redraws only what changed instead of fading the whole list in again.
+        var reusable = reuse
+            ? Items.GroupBy(i => i.ContentKey()).ToDictionary(g => g.Key, g => new Queue<BindingItem>(g))
+            : new Dictionary<string, Queue<BindingItem>>();
         Items.Clear();
         foreach (var binding in _config.Bindings)
-            Items.Add(new BindingItem(binding, OnItemToggled, _trust.IsTrusted(binding)));
+        {
+            bool trusted = _trust.IsTrusted(binding);
+            if (reusable.TryGetValue(BindingItem.ContentKey(binding, trusted), out var same) && same.Count > 0)
+            {
+                var item = same.Dequeue();
+                item.Rebind(binding);
+                Items.Add(item);
+            }
+            else
+            {
+                Items.Add(new BindingItem(binding, OnItemToggled, trusted));
+            }
+        }
         RebuildProfiles();
         ApplyBindings();
         RebuildRows();

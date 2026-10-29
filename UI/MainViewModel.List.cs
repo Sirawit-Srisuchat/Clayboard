@@ -103,14 +103,38 @@ public sealed partial class MainViewModel
         return null;
     }
 
+    /// <summary>What <see cref="DeleteGroup"/> changed, so <see cref="RestoreGroup"/> can put it back.</summary>
+    public sealed record DeletedGroup(string Name, int Index, IReadOnlyList<HotkeyBinding> Members, bool WasCollapsed);
+
     /// <summary>Removes the group; its bindings stay, moved to "no group".</summary>
-    public void DeleteGroup(string name)
+    public DeletedGroup DeleteGroup(string name)
     {
+        var deleted = new DeletedGroup(
+            _config.Groups.FirstOrDefault(g => Same(g, name)) ?? name,
+            _config.Groups.FindIndex(g => Same(g, name)),
+            _config.Bindings.Where(b => Same(b.Group, name)).ToList(),
+            _config.CollapsedGroups.Any(g => Same(g, name)));
         _config.Groups.RemoveAll(g => Same(g, name));
         _config.CollapsedGroups.RemoveAll(g => Same(g, name));
-        foreach (var binding in _config.Bindings.Where(b => Same(b.Group, name)))
+        foreach (var binding in deleted.Members)
             binding.Group = null;
         _headers.Remove(name);
+        SaveOrReport();
+        RebuildRows();
+        return deleted;
+    }
+
+    /// <summary>Undoes <see cref="DeleteGroup"/>, for the bindings that are still around and still in no group.</summary>
+    public void RestoreGroup(DeletedGroup deleted)
+    {
+        if (_config.Groups.Any(g => Same(g, deleted.Name)))
+            return; // A new group took the name meanwhile.
+        _config.Groups.Insert(Math.Clamp(deleted.Index, 0, _config.Groups.Count), deleted.Name);
+        if (deleted.WasCollapsed)
+            _config.CollapsedGroups.Add(deleted.Name);
+        foreach (var binding in deleted.Members)
+            if (binding.Group is null && _config.Bindings.Contains(binding))
+                binding.Group = deleted.Name;
         SaveOrReport();
         RebuildRows();
     }
