@@ -139,6 +139,23 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
         return ms;
     }
 
+    /// <summary>Raised with the theme key whenever config.json's theme may have changed (load, reload, or a pick in Settings).</summary>
+    public event Action<string>? ThemeChanged;
+
+    public string Theme => Palette.Normalize(_config.Theme);
+
+    /// <summary>Switches the color theme and remembers it in config.json.</summary>
+    public void SetTheme(string key)
+    {
+        key = Palette.Normalize(key);
+        if (key == Theme)
+            return;
+        _config.Theme = key == Palette.OriginalKey ? null : key;
+        if (!TrySave(out var error))
+            LoadError = error;
+        ThemeChanged?.Invoke(key);
+    }
+
     /// <summary>Switches the UI language and remembers it in config.json.</summary>
     public void SetLanguage(string code)
     {
@@ -253,6 +270,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
         if (_store.CreatedStarter || (_trust.IsNew && !ConfigStore.IsPortable))
             _trust.Trust(_config.Bindings);
         NormalizeGroups();
+        ThemeChanged?.Invoke(Theme);
 
         // Switching language rebuilds the list itself (subtitles and keycaps are translated).
         if (Loc.Resolve(_config.Language) != Loc.Language)

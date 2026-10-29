@@ -71,6 +71,10 @@ internal static partial class Strings
         ["Settings.StartupError"] = "시작 프로그램 설정을 바꿀 수 없습니다. {0}",
         ["Settings.Language"] = "언어",
         ["Settings.LanguageHint"] = "모든 화면이 바로 바뀝니다.",
+        ["Settings.Theme"] = "테마",
+        ["Settings.ThemeHint"] = "모든 화면의 색입니다. 'Windows 설정 따르기'는 Windows 설정에 맞춰 밝게, 어둡게, 고대비로 바뀝니다.",
+        ["Theme.Original"] = "기본",
+        ["Theme.System"] = "Windows 설정 따르기",
 
         ["Rec.Tooltip"] = "클릭한 뒤 키를 누르세요",
         ["Rec.Idle"] = "클릭하여 키 기록",

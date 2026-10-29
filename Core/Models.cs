@@ -8,6 +8,9 @@ public sealed class AppConfig
     /// <summary>UI language code (en, th, ja, ko, zh, ru); null follows the Windows display language.</summary>
     public string? Language { get; set; }
 
+    /// <summary>Color theme key (see UI.Palette); null is the original earth-tone theme, "system" follows Windows.</summary>
+    public string? Theme { get; set; }
+
     /// <summary>How long a sequence waits for its next step, in milliseconds; null means the default.</summary>
     public int? SequenceTimeoutMs { get; set; }
 

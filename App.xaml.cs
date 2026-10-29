@@ -31,7 +31,7 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        Palette.Apply(Palette.FromWindows());
+        Palette.Apply(null); // The original theme until config.json says otherwise.
         SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
         Loc.Apply(null); // Windows display language until config.json says otherwise.
 
@@ -51,7 +51,9 @@ public partial class App : Application
         StartupManager.RefreshPath();
         var viewModel = new MainViewModel(_store, _engine, new TrustStore());
         _viewModel = viewModel;
+        viewModel.ThemeChanged += key => Dispatcher.InvokeAsync(() => ApplyTheme(key));
         viewModel.Reload();
+        Palette.Apply(viewModel.Theme); // Right away, so the first window opens in the saved theme.
 
         var tray = new TrayIcon(ShowWindow, () => viewModel.Paused = !viewModel.Paused, viewModel.Reload, ExitApp);
         _tray = tray;
@@ -86,7 +88,7 @@ public partial class App : Application
         return found;
     }
 
-    // Switching Windows between light, dark, and high contrast restyles the app right away.
+    // With the "system" theme, switching Windows between light, dark, and high contrast restyles the app right away.
     private void OnUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
     {
         if (e.Category is not (UserPreferenceCategory.General or UserPreferenceCategory.Color
@@ -94,24 +96,27 @@ public partial class App : Application
             return;
         Dispatcher.InvokeAsync(() =>
         {
-            var mode = Palette.FromWindows();
-            if (mode == Palette.Current)
-                return;
-            Palette.Apply(mode);
-            if (_window is null)
-                return;
-            // Styles took their colors when the window was built, so build it again in the same place.
-            var (bounds, state) = (_window.RestoreBounds, _window.WindowState);
-            _restyling = true;
-            _window.Close();
-            _restyling = false;
-            ShowWindow();
-            _window!.Left = bounds.Left;
-            _window.Top = bounds.Top;
-            _window.Width = bounds.Width;
-            _window.Height = bounds.Height;
-            _window.WindowState = state;
+            if (Palette.CurrentKey == Palette.SystemKey)
+                ApplyTheme(Palette.SystemKey);
         });
+    }
+
+    private void ApplyTheme(string key)
+    {
+        if (!Palette.Apply(key) || _window is null)
+            return;
+        // Styles took their colors when the window was built, so build it again in the same place and on the same page.
+        var (bounds, state, page) = (_window.RestoreBounds, _window.WindowState, _window.CurrentPage);
+        _restyling = true;
+        _window.Close();
+        _restyling = false;
+        ShowWindow();
+        _window!.Left = bounds.Left;
+        _window.Top = bounds.Top;
+        _window.Width = bounds.Width;
+        _window.Height = bounds.Height;
+        _window.WindowState = state;
+        _window.ShowPageByTag(page);
     }
 
     protected override void OnExit(ExitEventArgs e)

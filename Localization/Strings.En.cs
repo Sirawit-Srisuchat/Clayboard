@@ -72,6 +72,10 @@ internal static partial class Strings
         ["Settings.StartupError"] = "Couldn't change the startup setting. {0}",
         ["Settings.Language"] = "Language",
         ["Settings.LanguageHint"] = "Every screen switches right away.",
+        ["Settings.Theme"] = "Theme",
+        ["Settings.ThemeHint"] = "Colors for every screen. Follow Windows switches between light, dark, and high contrast with your Windows settings.",
+        ["Theme.Original"] = "Original",
+        ["Theme.System"] = "Follow Windows",
 
         ["Rec.Tooltip"] = "Click, then press the keys",
         ["Rec.Idle"] = "Click to record keys",

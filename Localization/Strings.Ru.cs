@@ -71,6 +71,10 @@ internal static partial class Strings
         ["Settings.StartupError"] = "Не удалось изменить автозапуск. {0}",
         ["Settings.Language"] = "Язык",
         ["Settings.LanguageHint"] = "Все экраны переключатся сразу.",
+        ["Settings.Theme"] = "Тема",
+        ["Settings.ThemeHint"] = "Цвета всех экранов. «Как в Windows» переключает светлую, тёмную и контрастную тему вместе с настройками Windows.",
+        ["Theme.Original"] = "Исходная",
+        ["Theme.System"] = "Как в Windows",
 
         ["Rec.Tooltip"] = "Нажмите, затем нажмите клавиши",
         ["Rec.Idle"] = "Нажмите, чтобы записать клавиши",

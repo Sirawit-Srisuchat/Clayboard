@@ -72,6 +72,10 @@ internal static partial class Strings
         ["Settings.StartupError"] = "无法更改开机启动设置。{0}",
         ["Settings.Language"] = "语言",
         ["Settings.LanguageHint"] = "所有界面立即切换。",
+        ["Settings.Theme"] = "主题",
+        ["Settings.ThemeHint"] = "所有界面的颜色。“跟随 Windows”会按 Windows 设置在浅色、深色和高对比度之间切换。",
+        ["Theme.Original"] = "原始",
+        ["Theme.System"] = "跟随 Windows",
 
         ["Rec.Tooltip"] = "点击后按下按键",
         ["Rec.Idle"] = "点击录制按键",

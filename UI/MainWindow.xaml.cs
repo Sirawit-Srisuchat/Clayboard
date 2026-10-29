@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -31,6 +33,7 @@ public partial class MainWindow : Window
         StateChanged += (_, _) => UpdateMaximizedLayout();
         Loc.Changed += UpdateMaximizedLayout;
         BuildLanguageChips();
+        BuildThemeChips();
         UpdateMaximizedLayout();
         _drag = new RowDragController(BindingList, ListScroller, viewModel);
     }
@@ -51,6 +54,73 @@ public partial class MainWindow : Window
             LanguageChips.Children.Add(chip);
         }
     }
+
+    // Picking a theme restyles the app, which rebuilds this window (see App.ApplyTheme) and keeps the Settings page open.
+    private void BuildThemeChips()
+    {
+        AddThemeChip(Palette.SystemKey, "Theme.System", Palette.FromWindows());
+        foreach (var theme in Palette.Themes)
+            AddThemeChip(theme.Key, theme.Key == Palette.OriginalKey ? "Theme.Original" : null, theme);
+    }
+
+    private void AddThemeChip(string key, string? labelKey, ThemeColors colors)
+    {
+        // A small preview: background, card, and accent side by side.
+        var swatch = new Border
+        {
+            Width = 30,
+            Height = 14,
+            CornerRadius = new CornerRadius(4),
+            BorderThickness = new Thickness(1),
+            BorderBrush = Palette.Frozen(colors.Line),
+            Margin = new Thickness(0, 0, 8, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = new UniformGrid
+            {
+                Rows = 1,
+                Children =
+                {
+                    new Border { Background = Palette.Frozen(colors.Bg), CornerRadius = new CornerRadius(3, 0, 0, 3) },
+                    new Border { Background = Palette.Frozen(colors.Card) },
+                    new Border { Background = Palette.Frozen(colors.Clay), CornerRadius = new CornerRadius(0, 3, 3, 0) },
+                },
+            },
+        };
+        var label = new TextBlock();
+        var chip = new RadioButton
+        {
+            Style = (Style)FindResource("Chip"),
+            GroupName = "Theme",
+            Content = new StackPanel { Orientation = Orientation.Horizontal, Children = { swatch, label } },
+            Tag = key,
+            IsChecked = key == _viewModel.Theme,
+        };
+        // Original and Follow Windows are translated; the other theme names are the same in every language.
+        if (labelKey is not null)
+        {
+            label.SetResourceReference(TextBlock.TextProperty, labelKey);
+            chip.SetResourceReference(AutomationProperties.NameProperty, labelKey);
+        }
+        else
+        {
+            label.Text = colors.Name;
+            AutomationProperties.SetName(chip, colors.Name);
+        }
+        chip.Checked += (_, _) => _viewModel.SetTheme(key);
+        ThemeChips.Children.Add(chip);
+    }
+
+    /// <summary>The Tag of the sidebar page that's showing ("Bindings", "Profiles", "Macros", or "Settings").</summary>
+    public string CurrentPage =>
+        NavItems().FirstOrDefault(r => r.IsChecked == true)?.Tag as string ?? "Bindings";
+
+    public void ShowPageByTag(string tag)
+    {
+        if (NavItems().FirstOrDefault(r => (string)r.Tag == tag) is { } item)
+            item.IsChecked = true;
+    }
+
+    private IEnumerable<RadioButton> NavItems() => ((Panel)NavBindings.Parent).Children.OfType<RadioButton>();
 
     protected override void OnSourceInitialized(EventArgs e)
     {

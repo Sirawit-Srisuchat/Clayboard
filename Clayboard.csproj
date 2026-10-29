@@ -10,7 +10,7 @@
     <RootNamespace>Clayboard</RootNamespace>
     <AssemblyName>Clayboard</AssemblyName>
     <!-- The installer reads its version from the exe, so this is the one place to bump it. -->
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Product>Clayboard</Product>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>

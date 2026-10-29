@@ -4,7 +4,7 @@
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
         <ResourceDictionary>
-            <!-- Colors and UI/Theme.xaml are merged in at startup by UI/Palette.cs, to follow Windows' light, dark, or high contrast -->
+            <!-- Colors and UI/Theme.xaml are merged in at startup by UI/Palette.cs, for the theme picked in Settings -->
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         </ResourceDictionary>
     </Application.Resources>

@@ -71,6 +71,10 @@ internal static partial class Strings
         ["Settings.StartupError"] = "เปลี่ยนการตั้งค่าเปิดพร้อม Windows ไม่ได้ {0}",
         ["Settings.Language"] = "ภาษา",
         ["Settings.LanguageHint"] = "เปลี่ยนทุกหน้าจอทันที",
+        ["Settings.Theme"] = "ธีม",
+        ["Settings.ThemeHint"] = "สีของทุกหน้าจอ \"ตาม Windows\" จะสลับสว่าง มืด หรือคอนทราสต์สูงตามการตั้งค่า Windows",
+        ["Theme.Original"] = "สีเดิม",
+        ["Theme.System"] = "ตาม Windows",
 
         ["Rec.Tooltip"] = "คลิก แล้วกดปุ่มที่ต้องการ",
         ["Rec.Idle"] = "คลิกเพื่อบันทึกปุ่ม",

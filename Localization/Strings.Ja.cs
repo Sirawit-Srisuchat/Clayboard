@@ -71,6 +71,10 @@ internal static partial class Strings
         ["Settings.StartupError"] = "スタートアップ設定を変更できませんでした。{0}",
         ["Settings.Language"] = "言語",
         ["Settings.LanguageHint"] = "すべての画面がすぐに切り替わります。",
+        ["Settings.Theme"] = "テーマ",
+        ["Settings.ThemeHint"] = "すべての画面の色です。「Windows に合わせる」は Windows の設定に合わせてライト、ダーク、ハイコントラストを切り替えます。",
+        ["Theme.Original"] = "オリジナル",
+        ["Theme.System"] = "Windows に合わせる",
 
         ["Rec.Tooltip"] = "クリックしてキーを押す",
         ["Rec.Idle"] = "クリックしてキーを記録",
